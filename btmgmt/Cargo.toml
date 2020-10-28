@@ -1,0 +1,21 @@
+[package]
+name = "btmgmt"
+version = "0.1.0"
+authors = ["yskszk63 <yskszk63@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+tokio = { version="0.3", features=["macros", "net", "sync", "stream"] }
+socket2 = "0.3"
+libc = "0.2"
+bytes = "0.6"
+thiserror = "1.0"
+bitflags = "1.2"
+log = "0.4"
+uuid = "0.8"
+derive-new = "0.5"
+derive_builder = "0.9"
+getset = "0.1"
+
+[dev-dependencies]
+tokio = { version="0.3", features=["rt-multi-thread"] }
