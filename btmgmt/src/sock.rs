@@ -6,9 +6,6 @@ use libc::{c_int, c_ushort, sa_family_t, sockaddr, socklen_t};
 use socket2::{Domain, Protocol, SockAddr, Socket, Type};
 use tokio::net::UdpSocket;
 
-// <bluetooth/bluetooth.h>
-const AF_BLUETOOTH: c_int = 31;
-
 // <bluetooth/hci.h>
 const BTPROTO_HCI: c_int = 1;
 const HCI_DEV_NONE: c_ushort = 0xffff;
@@ -38,13 +35,13 @@ impl From<sockaddr_hci> for sockaddr {
 }
 
 fn mgmt_create() -> io::Result<Socket> {
-    let domain = Domain::from(AF_BLUETOOTH);
+    let domain = Domain::from(libc::AF_BLUETOOTH);
     let r#type = Type::raw().non_blocking().cloexec();
     let proto = Protocol::from(BTPROTO_HCI);
     let sock = Socket::new(domain, r#type, Some(proto))?;
 
     let addr = sockaddr_hci {
-        hci_family: AF_BLUETOOTH as sa_family_t,
+        hci_family: libc::AF_BLUETOOTH as sa_family_t,
         hci_dev: HCI_DEV_NONE,
         hci_channel: HCI_CHANNEL_CONTROL,
     }

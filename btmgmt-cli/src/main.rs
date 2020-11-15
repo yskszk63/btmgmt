@@ -158,6 +158,10 @@ enum ControllerCommand {
         #[clap(short, long)]
         connectable: bool,
     },
+
+    SecureConnections {
+        flag: OnOff,
+    }
 }
 
 impl Default for ControllerCommand {
@@ -322,6 +326,17 @@ impl ControllerCommand {
                 };
                 let reply = client
                     .call(index, command::SetAdvertising::new(flag))
+                    .await?;
+                println!("{:?}", reply.current_settings());
+            }
+
+            Self::SecureConnections { flag } => {
+                let flag = match flag {
+                    OnOff::On => btmgmt::SecureConnections::Enable,
+                    OnOff::Off => btmgmt::SecureConnections::Disable,
+                };
+                let reply = client
+                    .call(index, command::SetSecureConnections::new(flag))
                     .await?;
                 println!("{:?}", reply.current_settings());
             }
