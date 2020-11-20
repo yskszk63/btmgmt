@@ -150,7 +150,7 @@ impl Unpack for CommandsEvents {
 
 #[derive(Debug, thiserror::Error)]
 #[error("unable to parse addrss")]
-pub struct ParseAddressError;
+pub struct ParseAddressError(String);
 
 packable_newtype! {
     #[derive(Debug, Clone)]
@@ -165,15 +165,23 @@ impl FromStr for Address {
             .splitn(6, ':')
             .map(|v| u8::from_str_radix(v, 16))
             .collect::<Result<Vec<_>, _>>()
-            .map_err(|_| ParseAddressError)?;
+            .map_err(|_| ParseAddressError(s.to_string()))?;
         if b.len() != 6 {
-            return Err(ParseAddressError);
+            return Err(ParseAddressError(s.to_string()));
         }
         b.reverse();
 
         let mut v = [0; 6];
         v.copy_from_slice(&b);
         Ok(Address(v))
+    }
+}
+
+impl TryFrom<&str> for Address {
+    type Error = ParseAddressError;
+
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        Self::from_str(value)
     }
 }
 
@@ -424,6 +432,7 @@ packable_struct! {
     #[derive(Debug, Clone, Builder, Getters)]
     #[get="pub"]
     pub struct LongTermKey {
+        #[builder(try_setter)]
         address: Address,
         address_type: AddressType,
         key_type: LongTermKeyType,

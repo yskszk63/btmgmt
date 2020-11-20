@@ -77,10 +77,10 @@ pub use packet::{
     ClassOfDevice, ConfirmHint, ConnectionParameter, ControllerBus, ControllerConfigurationOption,
     ControllerIndex, ControllerType, DeviceConnectFlags, DeviceDisconnectReason, DeviceFlags,
     Discoverable, ErrorCode, FeatureAction, FeatureFlags, IdentityResolvingKey, IoCapability,
-    LinkKey, LinkKeyType, LongTermKey, LongTermKeyType, Name, NameError, Phys,
-    RuntimeConfigurationParameter, RuntimeConfigurationParameterType, SecureConnections, Settings,
-    ShortName, SignatureResolvingKey, SuspendState, SystemConfigurationParameter,
-    SystemConfigurationParameterType, Uuid, WakeReason,
+    LinkKey, LinkKeyType, LongTermKey, LongTermKeyBuilder, LongTermKeyType, Name, NameError,
+    ParseAddressError, Phys, RuntimeConfigurationParameter, RuntimeConfigurationParameterType,
+    SecureConnections, Settings, ShortName, SignatureResolvingKey, SuspendState,
+    SystemConfigurationParameter, SystemConfigurationParameterType, Uuid, WakeReason,
 };
 
 #[macro_use]
