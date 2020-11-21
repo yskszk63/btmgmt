@@ -319,7 +319,7 @@ event! {
     pub event PasskeyNotify: 0x0017 {
         address: super::Address,
         address_type: super::AddressType,
-        passkey: [u8; 4],
+        passkey: u32,
         entered: u8,
     }
 

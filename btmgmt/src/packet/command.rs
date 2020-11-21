@@ -565,7 +565,7 @@ command! {
     pub command UserPasskeyReply: 0x001E {
         address: super::Address,
         address_type: super::AddressType,
-        passkey: [u8; 4],
+        passkey: u32,
     }
 
     /// Reply for [`UserPasskeyReply`]
