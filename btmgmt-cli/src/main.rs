@@ -161,7 +161,7 @@ enum ControllerCommand {
 
     SecureConnections {
         flag: OnOff,
-    }
+    },
 }
 
 impl Default for ControllerCommand {
