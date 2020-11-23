@@ -377,6 +377,9 @@ packable_enum! {
     pub enum LongTermKeyType: u8 {
         UnauthenticatedKey => 0x00,
         AuthenticatedKey => 0x01,
+        UnauthenticatedP256Key => 0x02,
+        AuthenticatedP256Key => 0x03,
+        DebugKeyP256 => 0x04,
     }
 }
 
