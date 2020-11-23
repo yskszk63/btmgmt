@@ -1,3 +1,4 @@
+use bdaddr::Address;
 use bytes::{Buf, BufMut, Bytes, BytesMut};
 
 #[derive(Debug, thiserror::Error)]
@@ -174,6 +175,18 @@ where
     fn unpack<B: Buf>(buf: &mut B) -> Result<Self> {
         let inner = <P as Unpack>::unpack(buf)?;
         Ok(Box::new(inner))
+    }
+}
+
+impl Pack for Address {
+    fn pack(self, buf: &mut BytesMut) {
+        <[u8; 6] as Pack>::pack(self.into(), buf)
+    }
+}
+
+impl Unpack for Address {
+    fn unpack<B: Buf>(buf: &mut B) -> Result<Self> {
+        Ok(<[u8; 6] as Unpack>::unpack(buf)?.into())
     }
 }
 

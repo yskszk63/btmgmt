@@ -70,17 +70,17 @@
 //! Unless you explicitly state otherwise, any contribution intentionally submitted
 //! for inclusion in the work by you, as defined in the Apache-2.0 license, shall be
 //! dual licensed as above, without any additional terms or conditions.!
+pub use bdaddr::{Address, AddressParseError};
 pub use client::Client;
 pub use packet::{
-    command, event, Action, Address, AddressType, AdvertiseInstance, AdvertisementMonitorFeatures,
+    command, event, Action, AddressType, AdvertiseInstance, AdvertisementMonitorFeatures,
     AdvertisementMonitorHandle, AdvertisementPattern, Advertising, AdvertisingFlag, BlockedKey,
     ClassOfDevice, ConfirmHint, ConnectionParameter, ControllerBus, ControllerConfigurationOption,
     ControllerIndex, ControllerType, DeviceConnectFlags, DeviceDisconnectReason, DeviceFlags,
     Discoverable, ErrorCode, FeatureAction, FeatureFlags, IdentityResolvingKey, IoCapability,
-    LinkKey, LinkKeyType, LongTermKey, LongTermKeyBuilder, LongTermKeyType, Name, NameError,
-    ParseAddressError, Phys, Privacy, RuntimeConfigurationParameter,
-    RuntimeConfigurationParameterType, SecureConnections, Settings, ShortName,
-    SignatureResolvingKey, SuspendState, SystemConfigurationParameter,
+    LinkKey, LinkKeyType, LongTermKey, LongTermKeyBuilder, LongTermKeyType, Name, NameError, Phys,
+    Privacy, RuntimeConfigurationParameter, RuntimeConfigurationParameterType, SecureConnections,
+    Settings, ShortName, SignatureResolvingKey, SuspendState, SystemConfigurationParameter,
     SystemConfigurationParameterType, Uuid, WakeReason,
 };
 
