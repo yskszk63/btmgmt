@@ -232,7 +232,7 @@ event! {
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
     #[derive(Debug, Clone, Getters)]
     #[get="pub"]
-    pub event UserPasskey: 0x0010 {
+    pub event UserPasskeyRequest: 0x0010 {
         address: super::Address,
         address_type: super::AddressType,
     }
