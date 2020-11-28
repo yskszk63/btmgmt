@@ -3,7 +3,7 @@ use btmgmt::*;
 
 use tokio::stream::StreamExt;
 
-#[tokio::main]
+#[tokio::main(flavor = "current_thread")]
 async fn main() {
     let (client, handle) = Client::open().unwrap();
 
