@@ -1,5 +1,6 @@
 //! mgmt API commands.
 use std::collections::HashSet;
+use std::fmt;
 use std::ops::Deref;
 
 use bytes::BytesMut;
@@ -1562,9 +1563,9 @@ impl StartServiceDiscovery {
 }
 
 /// Management API Command
-pub trait Command: Pack {
+pub trait Command: Pack + fmt::Debug {
     const CODE: CommandCode;
-    type Reply: Unpack;
+    type Reply: Unpack + fmt::Debug;
 }
 
 #[derive(Debug)]

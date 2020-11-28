@@ -1293,6 +1293,7 @@ async fn main() -> anyhow::Result<()> {
     let listen = opt.listen || opt.command.is_none();
 
     let (client, handle) = Client::open()?;
+    let handle = tokio::spawn(handle);
 
     let mut events = client.events().await;
     tokio::spawn(async move {

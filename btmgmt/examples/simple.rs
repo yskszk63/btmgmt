@@ -5,7 +5,10 @@ use tokio::stream::StreamExt;
 
 #[tokio::main(flavor = "current_thread")]
 async fn main() {
+    env_logger::init();
+
     let (client, handle) = Client::open().unwrap();
+    let handle = tokio::spawn(handle);
 
     let mut events = client.events().await;
     tokio::spawn(async move {

@@ -1,5 +1,6 @@
 //! mgmt API client.
 use std::collections::HashMap;
+use std::future::Future;
 use std::io;
 use std::pin::Pin;
 use std::sync::Arc;
@@ -10,7 +11,6 @@ use tokio::stream::Stream;
 use tokio::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
 use tokio::sync::oneshot::{self, Sender};
 use tokio::sync::Mutex;
-use tokio::task::JoinHandle;
 
 use crate::pack::{Error as UnpackError, Pack, Unpack};
 use crate::packet::command::{Command, CommandCode, CommandInternal};
@@ -28,6 +28,8 @@ pub enum Error {
     RecievedData(#[from] UnpackError),
     #[error("error reply. {0:?}")]
     ErrorReply(ErrorCode),
+    #[error("empty reply")]
+    EmptyReply,
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -108,6 +110,7 @@ impl Task {
                             }
                         }
                         e => {
+                            log::debug!("<< {:?}", e);
                             let mut event_queues = event_queues.lock().await;
                             event_queues.retain(|q| {
                                 q.send((index.clone(), e.clone())).is_ok()
@@ -148,18 +151,18 @@ pub struct Client {
 }
 
 impl Client {
-    pub fn open() -> io::Result<(Self, JoinHandle<Result<(), TaskError>>)> {
+    pub fn open() -> io::Result<(Self, impl Future<Output = Result<(), TaskError>>)> {
         let sock = MgmtSocket::new()?;
         let (ingress_tx, ingress_rx) = mpsc::unbounded_channel();
         let event_queues = Arc::new(Mutex::new(vec![]));
         let task = Task::new(ingress_rx, sock, event_queues.clone());
-        let handle = tokio::spawn(task.run());
+        let io_loop = task.run();
         Ok((
             Self {
                 ingress_tx,
                 event_queues,
             },
-            handle,
+            io_loop,
         ))
     }
 
@@ -176,6 +179,7 @@ impl Client {
         I: Into<ControllerIndex>,
         P: Command,
     {
+        log::debug!(">> {:?}", command);
         let index = index.into();
         let command = CommandInternal::from((index.clone(), command));
         let mut buf = BytesMut::new();
@@ -187,10 +191,12 @@ impl Client {
             .map_err(|_| Error::ChannelSend)?;
 
         let (status, data) = rx.await?;
-        match (status, data) {
+        let reply = match (status, data) {
             (status, Some(mut data)) if status.success() => Ok(P::Reply::unpack(&mut data)?),
-            (status, None) if status.success() => todo!(),
+            (status, None) if status.success() => Err(Error::EmptyReply),
             (status, _) => Err(Error::ErrorReply(status)),
-        }
+        };
+        log::debug!("<< {:?}", reply);
+        reply
     }
 }
