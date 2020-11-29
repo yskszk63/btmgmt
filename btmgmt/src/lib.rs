@@ -12,7 +12,7 @@
 //!
 //! ## Example
 //!
-//! ```
+//! ```no_run
 //! use btmgmt::Client;
 //! use btmgmt::command::ReadManagementSupportedCommands;
 //! use tokio::stream::StreamExt;
