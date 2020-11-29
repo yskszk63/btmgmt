@@ -5,7 +5,7 @@ authors = ["yskszk63 <yskszk63@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-btmgmt = { path="../btmgmt" }
+btmgmt = { path="../btmgmt", version = "0.1.0" }
 clap = "3.0.0-beta.2"
 anyhow = "1.0"
 tokio = { version="0.3", features=["rt", "macros", "net", "sync"] }
