@@ -3,6 +3,9 @@ name = "btmgmt-cli"
 version = "0.1.0"
 authors = ["yskszk63 <yskszk63@gmail.com>"]
 edition = "2018"
+description = "Linux Management API Command Line Client"
+license = "MIT OR Apache-2.0"
+keywords = ["bluetooth"]
 
 [dependencies]
 btmgmt = { path="../btmgmt", version = "0.1.0" }
