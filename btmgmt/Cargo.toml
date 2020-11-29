@@ -3,6 +3,10 @@ name = "btmgmt"
 version = "0.1.0"
 authors = ["yskszk63 <yskszk63@gmail.com>"]
 edition = "2018"
+description = "Linux Management API Client"
+repository = "https://github.com/yskszk63/btmgmt"
+license = "MIT OR Apache-2.0"
+keywords = ["bluetooth"]
 
 [dependencies]
 tokio = { version = "0.3", features = ["macros", "net", "sync", "stream"] }

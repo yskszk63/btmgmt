@@ -18,6 +18,7 @@ use crate::packet::event::{CommandComplete, CommandStatus, Event};
 use crate::packet::{ControllerIndex, ErrorCode};
 use crate::sock::MgmtSocket;
 
+/// Management API Client's Error.
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
     #[error("channel send error.")]
@@ -32,6 +33,7 @@ pub enum Error {
     EmptyReply,
 }
 
+/// IO loop task Error.
 #[derive(Debug, thiserror::Error)]
 pub enum TaskError {
     #[error("channel send error.")]
@@ -132,6 +134,7 @@ impl Task {
     }
 }
 
+/// Management API Event Stream.
 #[derive(Debug)]
 pub struct Events {
     queue: UnboundedReceiver<(ControllerIndex, Event)>,
@@ -144,6 +147,23 @@ impl Stream for Events {
     }
 }
 
+/// Management API Client
+///
+/// # Example
+///
+/// ```no_run
+/// use btmgmt::Client;
+///
+/// # #[tokio::main(flavor = "current_thread")]
+/// # async fn main() {
+/// let (client, ioloop) = Client::open().unwrap();
+/// let handle = tokio::spawn(ioloop);
+///
+/// // Do staff
+///
+/// handle.await.unwrap().unwrap();
+/// # }
+/// ```
 #[derive(Debug)]
 pub struct Client {
     ingress_tx: UnboundedSender<Msg>,
@@ -151,6 +171,7 @@ pub struct Client {
 }
 
 impl Client {
+    /// Construct Management API Client.
     pub fn open() -> io::Result<(Self, impl Future<Output = Result<(), TaskError>>)> {
         let sock = MgmtSocket::new()?;
         let (ingress_tx, ingress_rx) = mpsc::unbounded_channel();
@@ -166,6 +187,25 @@ impl Client {
         ))
     }
 
+    /// Get Management API Event Stream.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use btmgmt::Client;
+    /// use tokio::stream::StreamExt;
+    ///
+    /// # #[tokio::main(flavor = "current_thread")]
+    /// # async fn main() {
+    /// # let (client, ioloop) = Client::open().unwrap();
+    /// # let handle = tokio::spawn(ioloop);
+    /// let mut events = client.events().await;
+    ///
+    /// while let Some((index, event)) = events.next().await {
+    ///     // Do staff.
+    /// }
+    /// # }
+    /// ```
     pub async fn events(&self) -> Events {
         let (tx, rx) = mpsc::unbounded_channel();
         let queues = self.event_queues.clone();
@@ -174,6 +214,23 @@ impl Client {
         Events { queue: rx }
     }
 
+    /// Call Management API Command.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use btmgmt::Client;
+    /// use btmgmt::command as cmd;
+    ///
+    /// # #[tokio::main(flavor = "current_thread")]
+    /// # async fn main() {
+    /// # let (client, ioloop) = Client::open().unwrap();
+    /// # let handle = tokio::spawn(ioloop);
+    /// // ...
+    /// let reply = client.call(0, cmd::ReadManagementVersionInformation::new()).await.unwrap();
+    /// // Do staff
+    /// # }
+    /// ```
     pub async fn call<I, P>(&self, index: I, command: P) -> Result<P::Reply, Error>
     where
         I: Into<ControllerIndex>,
