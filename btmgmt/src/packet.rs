@@ -18,7 +18,7 @@ pub mod command;
 pub mod event;
 
 packable_enum! {
-    #[derive(Debug, Clone)]
+    #[derive(Debug, Clone, PartialEq, Eq)]
     pub enum ErrorCode: u8 {
         Success => 0x00,
         UnknownCommand => 0x01,

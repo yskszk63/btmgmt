@@ -10,7 +10,7 @@ use bytes::{Bytes, BytesMut};
 use tokio::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
 use tokio::sync::oneshot::{self, Sender};
 use tokio::sync::Mutex;
-use tokio_stream::Stream;
+use futures::Stream;
 
 use crate::pack::{Error as UnpackError, Pack, Unpack};
 use crate::packet::command::{Command, CommandCode, CommandInternal};
