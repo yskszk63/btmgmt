@@ -7,10 +7,10 @@ use std::sync::Arc;
 use std::task::{Context, Poll};
 
 use bytes::{Bytes, BytesMut};
-use tokio::stream::Stream;
 use tokio::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
 use tokio::sync::oneshot::{self, Sender};
 use tokio::sync::Mutex;
+use tokio_stream::Stream;
 
 use crate::pack::{Error as UnpackError, Pack, Unpack};
 use crate::packet::command::{Command, CommandCode, CommandInternal};
@@ -143,7 +143,7 @@ pub struct Events {
 impl Stream for Events {
     type Item = (ControllerIndex, Event);
     fn poll_next(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Option<Self::Item>> {
-        Pin::new(&mut self.get_mut().queue).poll_next(cx)
+        Pin::new(&mut self.get_mut().queue).poll_recv(cx)
     }
 }
 
@@ -193,7 +193,7 @@ impl Client {
     ///
     /// ```no_run
     /// use btmgmt::Client;
-    /// use tokio::stream::StreamExt;
+    /// use tokio_stream::StreamExt;
     ///
     /// # #[tokio::main(flavor = "current_thread")]
     /// # async fn main() {

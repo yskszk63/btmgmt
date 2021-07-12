@@ -15,7 +15,7 @@
 //! ```no_run
 //! use btmgmt::Client;
 //! use btmgmt::command::ReadManagementSupportedCommands;
-//! use tokio::stream::StreamExt;
+//! use tokio_stream::StreamExt;
 //!
 //! #[tokio::main(flavor = "current_thread")]
 //! async fn main() {

@@ -8,6 +8,7 @@ use std::task::{Context, Poll};
 use libc::{c_int, c_ushort, sa_family_t, sockaddr, socklen_t};
 use socket2::{Domain, Protocol, SockAddr, Socket, Type};
 use tokio::io::unix::AsyncFd;
+use tokio::io::ReadBuf;
 
 macro_rules! ready {
     ($e:expr) => {
@@ -48,22 +49,22 @@ impl From<sockaddr_hci> for sockaddr {
 
 fn mgmt_create() -> io::Result<Socket> {
     let domain = Domain::from(libc::AF_BLUETOOTH);
-    let r#type = Type::raw().non_blocking().cloexec();
+    let r#type = Type::RAW.nonblocking().cloexec();
     let proto = Protocol::from(BTPROTO_HCI);
     let sock = Socket::new(domain, r#type, Some(proto))?;
 
-    let addr = sockaddr_hci {
-        hci_family: libc::AF_BLUETOOTH as sa_family_t,
-        hci_dev: HCI_DEV_NONE,
-        hci_channel: HCI_CHANNEL_CONTROL,
-    }
-    .into();
-    let addr = unsafe {
-        SockAddr::from_raw_parts(
-            &addr as *const _,
-            mem::size_of::<sockaddr_hci>() as socklen_t,
-        )
-    };
+    let (_, addr) = unsafe {
+        SockAddr::init(move |addr, len| {
+            let addr = mem::transmute::<_, &mut sockaddr_hci>(addr);
+            *addr = sockaddr_hci {
+                hci_family: libc::AF_BLUETOOTH as sa_family_t,
+                hci_dev: HCI_DEV_NONE,
+                hci_channel: HCI_CHANNEL_CONTROL,
+            };
+            *len = mem::size_of::<sockaddr_hci>() as socklen_t;
+            Ok(())
+        })
+    }?;
     sock.bind(&addr)?;
     Ok(sock)
 }
@@ -78,18 +79,17 @@ impl<'a, 'b> Future for Send<'a, 'b> {
         let Send(sock, buf) = self.get_mut();
 
         loop {
-            let mut g = ready!(sock.poll_write_ready(cx))?;
-            match sock.get_ref().send(buf) {
-                Ok(r) => return Poll::Ready(Ok(r)),
-                Err(e) if e.kind() == io::ErrorKind::WouldBlock => g.clear_ready(),
-                Err(e) => return Poll::Ready(Err(e)),
+            let mut guard = ready!(sock.poll_write_ready(cx))?;
+            let r = guard.try_io(|fd| fd.get_ref().send(buf));
+            if let Ok(r) = r {
+                return Poll::Ready(r);
             }
         }
     }
 }
 
 #[derive(Debug)]
-pub(crate) struct Recv<'a, 'b>(&'a AsyncFd<Socket>, &'b mut [u8]);
+pub(crate) struct Recv<'a, 'b>(&'a AsyncFd<Socket>, ReadBuf<'b>);
 
 impl<'a, 'b> Future for Recv<'a, 'b> {
     type Output = io::Result<usize>;
@@ -98,11 +98,10 @@ impl<'a, 'b> Future for Recv<'a, 'b> {
         let Recv(sock, buf) = self.get_mut();
 
         loop {
-            let mut g = ready!(sock.poll_read_ready(cx))?;
-            match sock.get_ref().recv(buf) {
-                Ok(r) => return Poll::Ready(Ok(r)),
-                Err(e) if e.kind() == io::ErrorKind::WouldBlock => g.clear_ready(),
-                Err(e) => return Poll::Ready(Err(e)),
+            let mut guard = ready!(sock.poll_read_ready(cx))?;
+            let r = guard.try_io(|fd| fd.get_ref().recv(unsafe { buf.unfilled_mut() }));
+            if let Ok(r) = r {
+                return Poll::Ready(r);
             }
         }
     }
@@ -125,6 +124,6 @@ impl MgmtSocket {
     }
 
     pub(crate) fn recv<'b>(&self, buf: &'b mut [u8]) -> Recv<'_, 'b> {
-        Recv(&self.inner, buf)
+        Recv(&self.inner, ReadBuf::new(buf))
     }
 }

@@ -1,11 +1,11 @@
 use btmgmt::command::*;
 use btmgmt::*;
 
-use tokio::stream::StreamExt;
+use tokio_stream::StreamExt;
 
 #[tokio::main(flavor = "current_thread")]
 async fn main() {
-    env_logger::init();
+    pretty_env_logger::init();
 
     let (client, handle) = Client::open().unwrap();
     let handle = tokio::spawn(handle);
