@@ -1,5 +1,5 @@
-use btmgmt_packet::commands;
-use btmgmt_packet::pack::{Pack, Unpack};
+use btmgmt_packet_helper::commands;
+use btmgmt_packet_helper::pack::{Pack, Unpack};
 
 #[commands(name = Commands, trait = Command, codes = CommandCode)]
 mod commands {
@@ -28,4 +28,10 @@ fn main() {
 
     assert_eq!(MyCommandReply, r);
     assert!(matches!(Commands::from(MyCommand { f1: 0 }), Commands::MyCommand(MyCommand { f1: 0 })));
+
+    assert_eq!(Commands::from(MyCommand { f1: 0 }).code(), CommandCode::MyCommand);
+
+    let mut b = vec![];
+    Commands::from(MyCommand { f1: 0 }).pack_inner(&mut b).unwrap();
+    assert_eq!(b, &[0x00, 0x00]);
 }

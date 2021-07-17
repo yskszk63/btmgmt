@@ -116,18 +116,20 @@ fn apply(attr: Args, item: &mut ItemMod) -> syn::Result<()> {
     });
 
     contents.push(parse_quote! {
-        #[derive(Debug, Clone, PartialEq, Eq, Hash, ::btmgmt_packet::pack::Unpack)]
-        #[pack(u16)]
-        pub enum #codes {
-            #( #events = #vals, )*
+        impl #name {
+            pub fn unpack_inner<R>(code: #codes, read: &mut R) -> ::btmgmt_packet_helper::pack::Result<#name> where R: ::std::io::Read {
+                Ok(match code {
+                    #( #events::CODE => #name::#events(#events::unpack(read)?), )*
+                })
+            }
         }
     });
 
     contents.push(parse_quote! {
-        fn unpack_event<R>(code: #codes, read: &mut R) -> ::btmgmt_packet::pack::Result<#name> where R: ::std::io::Read {
-            Ok(match code {
-                #( #events::CODE => #name::#events(#events::unpack(read)?), )*
-            })
+        #[derive(Debug, Clone, PartialEq, Eq, Hash, ::btmgmt_packet_helper::pack::Pack, ::btmgmt_packet_helper::pack::Unpack)]
+        #[pack(u16)]
+        pub enum #codes {
+            #( #events = #vals, )*
         }
     });
 

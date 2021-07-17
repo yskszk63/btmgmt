@@ -2,7 +2,7 @@
 members = [
     "btmgmt",
     "btmgmt-cli",
-    "btmgmt-packet",
-    "btmgmt-packet/macros",
-    #"btmgmt-packet-macros",
+    "packet",
+    "packet/macros",
+    "packet/helper",
 ]

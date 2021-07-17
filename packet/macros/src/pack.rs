@@ -6,9 +6,9 @@ fn derive_unit(item: &DeriveInput, _: &DataStruct) -> syn::Result<TokenStream> {
     let ident = &item.ident;
 
     let code = quote! {
-        impl ::btmgmt_packet::pack::Unpack for #ident {
-            fn unpack<R>(_: &mut R) -> ::btmgmt_packet::pack::Result<Self> where R: ::std::io::Read {
-                Ok(Self)
+        impl ::btmgmt_packet_helper::pack::Pack for #ident {
+            fn pack<W>(&self, _: &mut W) -> ::btmgmt_packet_helper::pack::Result<()> where W: ::std::io::Write {
+                Ok(())
             }
         }
     };
@@ -17,14 +17,13 @@ fn derive_unit(item: &DeriveInput, _: &DataStruct) -> syn::Result<TokenStream> {
 
 fn derive_tuple(item: &DeriveInput, data: &DataStruct) -> syn::Result<TokenStream> {
     let ident = &item.ident;
-    let fields = (0..data.fields.len()).map(|_| TokenStream::new()).collect::<Vec<_>>();
+    let fields = (0..data.fields.len()).map(proc_macro2::Literal::usize_unsuffixed).collect::<Vec<_>>();
 
     let code = quote! {
-        impl ::btmgmt_packet::pack::Unpack for #ident {
-            fn unpack<R>(read: &mut R) -> ::btmgmt_packet::pack::Result<Self> where R: ::std::io::Read {
-                Ok(Self(
-                    #( #fields ::btmgmt_packet::pack::Unpack::unpack(read)?, )*
-                ))
+        impl ::btmgmt_packet_helper::pack::Pack for #ident {
+            fn pack<W>(&self, write: &mut W) -> ::btmgmt_packet_helper::pack::Result<()> where W: ::std::io::Write {
+                #( self.#fields.pack(write)?; )*
+                Ok(())
             }
         }
     };
@@ -36,11 +35,10 @@ fn derive_standard(item: &DeriveInput, data: &DataStruct) -> syn::Result<TokenSt
     let fields = data.fields.iter().map(|f| f.ident.as_ref().unwrap()).collect::<Vec<_>>();
 
     let code = quote! {
-        impl ::btmgmt_packet::pack::Unpack for #ident {
-            fn unpack<R>(read: &mut R) -> ::btmgmt_packet::pack::Result<Self> where R: ::std::io::Read {
-                Ok(Self {
-                    #( #fields: ::btmgmt_packet::pack::Unpack::unpack(read)?, )*
-                })
+        impl ::btmgmt_packet_helper::pack::Pack for #ident {
+            fn pack<W>(&self, write: &mut W) -> ::btmgmt_packet_helper::pack::Result<()> where W: ::std::io::Write {
+                #( self.#fields.pack(write)?; )*
+                Ok(())
             }
         }
     };
@@ -70,14 +68,12 @@ fn derive_enum(item: &DeriveInput, data: &DataEnum) -> syn::Result<TokenStream> 
     }).collect::<syn::Result<Vec<_>>>()?;
 
     let code = quote! {
-        impl ::btmgmt_packet::pack::Unpack for #ident {
-            fn unpack<R>(read: &mut R) -> ::btmgmt_packet::pack::Result<Self> where R: ::std::io::Read {
-                #![allow(non_upper_case_globals)]
-                #( const #fields: #ty = #ident::#fields as #ty; )*
-                Ok(match #ty::unpack(read)? {
-                    #( #fields => Self::#fields, )*
-                    unknown => return Err(::btmgmt_packet::pack::Error::UnexpectedValue(format!("{}", unknown))),
-                })
+        impl ::btmgmt_packet_helper::pack::Pack for #ident {
+            fn pack<W>(&self, write: &mut W) -> ::btmgmt_packet_helper::pack::Result<()> where W: ::std::io::Write {
+                let v = match self {
+                    #( Self::#fields => Self::#fields as #ty, )*
+                };
+                v.pack(write)
             }
         }
     };
@@ -95,7 +91,7 @@ fn derive(input: TokenStream) -> syn::Result<TokenStream> {
     }
 }
 
-pub fn unpack(input: TokenStream) -> TokenStream {
+pub fn pack(input: TokenStream) -> TokenStream {
     match derive(input) {
         Ok(tokens) => tokens,
         Err(err) => err.to_compile_error(),

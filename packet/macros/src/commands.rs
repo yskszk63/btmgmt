@@ -188,7 +188,23 @@ fn apply(attr: Args, item: &mut ItemMod) -> syn::Result<()> {
     });
 
     contents.push(parse_quote! {
-        #[derive(Debug, Clone, PartialEq, Eq, Hash, ::btmgmt_packet::pack::Pack)]
+        impl #name {
+            pub fn code(&self) -> #codes {
+                match self {
+                    #( Self::#idents(..) => #codes::#idents, )*
+                }
+            }
+
+            pub fn pack_inner<W>(&self, write: &mut W) -> ::btmgmt_packet_helper::pack::Result<()> where W: ::std::io::Write {
+                match self {
+                    #( Self::#idents(inner) => inner.pack(write), )*
+                }
+            }
+        }
+    });
+
+    contents.push(parse_quote! {
+        #[derive(Debug, Clone, PartialEq, Eq, Hash, ::btmgmt_packet_helper::pack::Pack, ::btmgmt_packet_helper::pack::Unpack)]
         #[pack(u16)]
         pub enum #codes {
             #( #idents = #vals, )*

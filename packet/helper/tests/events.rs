@@ -1,5 +1,5 @@
-use btmgmt_packet::events;
-use btmgmt_packet::pack::Unpack;
+use btmgmt_packet_helper::events;
+use btmgmt_packet_helper::pack::Unpack;
 
 #[events(name = Events, codes = EventCode)]
 mod events {
