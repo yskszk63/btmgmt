@@ -6,15 +6,19 @@ use std::io;
 use std::collections::HashSet;
 use std::ffi::{CString, NulError};
 use std::marker::PhantomData;
+use std::ops::{Deref, DerefMut};
 use std::str::FromStr;
 
-pub use btmgmt_packet_helper::pack::{self, Pack, Unpack};
 use bitflags::bitflags;
+
+use btmgmt_packet_helper as helper;
+pub use helper::pack::{self, Pack, Unpack};
+use helper::helper::{Newtype, IterNewtype};
 
 pub mod command;
 pub mod event;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Newtype)]
 pub struct Address(bdaddr::Address);
 
 impl Pack for Address {
@@ -161,7 +165,8 @@ pub enum AddressType {
     LeRandom = 2,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, IterNewtype)]
+#[iter_newtype(item = AddressType, into_iter = ::std::collections::hash_set::IntoIter<AddressType>, no_iter_mut)]
 pub struct AddressTypes(HashSet<AddressType>);
 
 impl Pack for AddressTypes {
@@ -333,7 +338,7 @@ pub enum Discoverable {
     Limited = 0x02,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Newtype)]
 pub struct Uuid(uuid::Uuid);
 
 impl Pack for Uuid {
@@ -522,12 +527,14 @@ impl Unpack for VariableLengthBytes<u8> {
     }
 }
 
+// ?
 impl<L> From<u16> for VariableLengthBytes<L> {
     fn from(v: u16) -> Self {
         Self(v.to_le_bytes().to_vec().into(), PhantomData)
     }
 }
 
+// ?
 impl<L> TryFrom<VariableLengthBytes<L>> for u16 {
     type Error = (); // FIXME
     fn try_from(value: VariableLengthBytes<L>) -> Result<Self, Self::Error> {
@@ -535,6 +542,32 @@ impl<L> TryFrom<VariableLengthBytes<L>> for u16 {
             [i1, i2] => Ok(u16::from_le_bytes([i1, i2])),
             _ => Err(()),
         }
+    }
+}
+
+impl<L> AsRef<[u8]> for VariableLengthBytes<L> {
+    fn as_ref(&self) -> &[u8] {
+        &self.0
+    }
+}
+
+impl<L> AsMut<[u8]> for VariableLengthBytes<L> {
+    fn as_mut(&mut self) -> &mut [u8] {
+        &mut self.0
+    }
+}
+
+impl<L> Deref for VariableLengthBytes<L> {
+    type Target = [u8];
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl<L> DerefMut for VariableLengthBytes<L> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
     }
 }
 
@@ -587,7 +620,7 @@ impl From<u8> for AdvertiseInstance {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, IterNewtype)]
 pub struct AdvertiseInstances(Vec<AdvertiseInstance>);
 
 impl Pack for AdvertiseInstances {
@@ -607,14 +640,6 @@ impl Unpack for AdvertiseInstances {
             .map(|_| Unpack::unpack(read))
             .collect::<Result<Vec<_>, _>>()?;
         Ok(Self(v))
-    }
-}
-
-impl std::iter::IntoIterator for AdvertiseInstances {
-    type Item = AdvertiseInstance;
-    type IntoIter = std::vec::IntoIter<AdvertiseInstance>;
-    fn into_iter(self) -> Self::IntoIter {
-        self.0.into_iter()
     }
 }
 
@@ -823,7 +848,7 @@ configuration_parameter! {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, IterNewtype)]
 pub struct Remaining<T>(Vec<T>);
 
 impl<T> Pack for Remaining<T>

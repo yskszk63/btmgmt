@@ -30,7 +30,7 @@ async fn main() {
         .call(None, ReadControllerIndexList)
         .await
         .unwrap();
-    for index in r.0 {
+    for index in r {
         let r = client
             .call(index.clone(), ReadControllerInformation)
             .await
