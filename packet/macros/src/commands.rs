@@ -174,9 +174,9 @@ fn apply(attr: Args, item: &mut ItemMod) -> syn::Result<()> {
     let vals = targets.iter().map(Target::val).collect::<Vec<_>>();
 
     contents.push(parse_quote! {
-        pub trait #trait_ {
+        pub trait #trait_: ::std::convert::Into<#name> {
             const CODE: #codes;
-            type Reply;
+            type Reply: ::btmgmt_packet_helper::pack::Unpack;
         }
     });
 

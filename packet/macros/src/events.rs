@@ -108,7 +108,7 @@ fn apply(attr: Args, item: &mut ItemMod) -> syn::Result<()> {
     }
 
     contents.push(parse_quote! {
-        #[derive(Debug)]
+        #[derive(Debug, Clone)]
         pub enum #name {
             #( #events(#events), )*
             Unknown(u16, Box<[u8]>),

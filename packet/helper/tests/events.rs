@@ -5,7 +5,7 @@ use btmgmt_packet_helper::pack::Unpack;
 mod events {
     use super::*;
 
-    #[derive(Debug, Unpack)]
+    #[derive(Debug, Clone, Unpack)]
     #[event(0x0001)]
     pub struct  MyEvent {
         pub f1: u16,

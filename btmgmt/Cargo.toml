@@ -23,6 +23,7 @@ derive-new = "0.5"
 derive_builder = "0.10"
 getset = "0.1"
 bdaddr = "0.1"
+btmgmt-packet = { path = "../packet" }
 
 [dev-dependencies]
 tokio = { version = "1.8", features = ["rt"] }

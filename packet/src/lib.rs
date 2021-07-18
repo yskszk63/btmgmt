@@ -8,7 +8,7 @@ use std::ffi::{CString, NulError};
 use std::marker::PhantomData;
 use std::str::FromStr;
 
-use btmgmt_packet_helper::pack::{self, Pack, Unpack};
+pub use btmgmt_packet_helper::pack::{self, Pack, Unpack};
 use bitflags::bitflags;
 use bdaddr::Address;
 

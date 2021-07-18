@@ -33,7 +33,7 @@ mod imp {
 
     /// Reply for [`ReadManagementSupportedCommands`]
     #[derive(Debug, Unpack)]
-    pub struct ReadManagementSupportedCommandsReply(super::CommandsEvents);
+    pub struct ReadManagementSupportedCommandsReply(pub super::CommandsEvents);
 
     /// Read Controller Index List Command
     ///
@@ -45,7 +45,7 @@ mod imp {
 
     /// Reply for [`ReadControllerIndexList`]
     #[derive(Debug, Unpack)]
-    pub struct ReadControllerIndexListReply(Vec<ControllerIndex>);
+    pub struct ReadControllerIndexListReply(pub Vec<ControllerIndex>);
 
     /// Read Controller Information Command
     ///
@@ -74,11 +74,11 @@ mod imp {
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
     #[derive(Debug, Pack)]
     #[command(code = 0x0005, reply = SetPoweredReply)]
-    pub struct SetPowered(bool);
+    pub struct SetPowered(pub bool);
 
     /// Reply for [`SetPowered`]
     #[derive(Debug, Unpack)]
-    pub struct SetPoweredReply(super::Settings);
+    pub struct SetPoweredReply(pub super::Settings);
 
     /// Set Discoverable Command
     ///
@@ -93,7 +93,7 @@ mod imp {
 
     /// Reply for [`SetDiscoverable`]
     #[derive(Debug, Unpack)]
-    pub struct SetDiscoverableReply(super::Settings);
+    pub struct SetDiscoverableReply(pub super::Settings);
 
     /// Set Connectable Command
     ///
@@ -101,11 +101,11 @@ mod imp {
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
     #[derive(Debug, Pack)]
     #[command(code = 0x0007, reply = SetConnectableReply)]
-    pub struct SetConnectable(bool);
+    pub struct SetConnectable(pub bool);
 
     /// Reply for [`SetConnectable`]
     #[derive(Debug, Unpack)]
-    pub struct SetConnectableReply(super::Settings);
+    pub struct SetConnectableReply(pub super::Settings);
 
     /// Set Fast Connectable Command
     ///
@@ -113,11 +113,11 @@ mod imp {
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
     #[derive(Debug, Pack)]
     #[command(code = 0x0008, reply = SetFastConnectableReply)]
-    pub struct SetFastConnectable(bool);
+    pub struct SetFastConnectable(pub bool);
 
     /// Reply for [`SetFastConnectable`]
     #[derive(Debug, Unpack)]
-    pub struct SetFastConnectableReply(super::Settings);
+    pub struct SetFastConnectableReply(pub super::Settings);
 
     /// Set Bondable Command
     ///
@@ -125,11 +125,11 @@ mod imp {
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
     #[derive(Debug, Pack)]
     #[command(code = 0x0009, reply = SetBondableReply)]
-    pub struct SetBondable(bool);
+    pub struct SetBondable(pub bool);
 
     /// Reply for [`SetBondable`]
     #[derive(Debug, Unpack)]
-    pub struct SetBondableReply(super::Settings);
+    pub struct SetBondableReply(pub super::Settings);
 
     /// Set Link Security Command
     ///
@@ -137,11 +137,11 @@ mod imp {
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
     #[derive(Debug, Pack)]
     #[command(code = 0x000A, reply = SetLinkSecurityReply)]
-    pub struct SetLinkSecurity(bool);
+    pub struct SetLinkSecurity(pub bool);
 
     /// Reply for [`SetLinkSecurity`]
     #[derive(Debug, Unpack)]
-    pub struct SetLinkSecurityReply(super::Settings);
+    pub struct SetLinkSecurityReply(pub super::Settings);
 
     /// Set Secure Simple Pairing Command
     ///
@@ -149,11 +149,11 @@ mod imp {
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
     #[derive(Debug, Pack)]
     #[command(code = 0x000B, reply = SetSecureSimplePairingReply)]
-    pub struct SetSecureSimplePairing(bool);
+    pub struct SetSecureSimplePairing(pub bool);
 
     /// Reply for [`SetSecureSimplePairing`]
     #[derive(Debug, Unpack)]
-    pub struct SetSecureSimplePairingReply(super::Settings);
+    pub struct SetSecureSimplePairingReply(pub super::Settings);
 
     /// Set High Speed Command
     ///
@@ -161,11 +161,11 @@ mod imp {
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
     #[derive(Debug, Pack)]
     #[command(code = 0x000C, reply = SetHighSpeedReply)]
-    pub struct SetHighSpeed(bool);
+    pub struct SetHighSpeed(pub bool);
 
     /// Reply for [`SetHighSpeed`]
     #[derive(Debug, Unpack)]
-    pub struct SetHighSpeedReply(super::Settings);
+    pub struct SetHighSpeedReply(pub super::Settings);
 
     /// Set Low Energy Command
     ///
@@ -173,11 +173,11 @@ mod imp {
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
     #[derive(Debug, Pack)]
     #[command(code = 0x000D, reply = SetLowEnergyReply)]
-    pub struct SetLowEnergy(bool);
+    pub struct SetLowEnergy(pub bool);
 
     /// Reply for [`SetLowEnergy`]
     #[derive(Debug, Unpack)]
-    pub struct SetLowEnergyReply(super::Settings);
+    pub struct SetLowEnergyReply(pub super::Settings);
 
     /// Set Device Class Command
     ///
@@ -192,7 +192,7 @@ mod imp {
 
     /// Reply for [`SetDeviceClass`]
     #[derive(Debug, Unpack)]
-    pub struct SetDeviceClassReply(super::ClassOfDevice);
+    pub struct SetDeviceClassReply(pub super::ClassOfDevice);
 
     /// Set Local Name Command
     ///
@@ -225,7 +225,7 @@ mod imp {
 
     /// Reply for [`AddUuid`]
     #[derive(Debug, Unpack)]
-    pub struct AddUuidReply(super::ClassOfDevice);
+    pub struct AddUuidReply(pub super::ClassOfDevice);
 
     /// Remove UUID Command
     ///
@@ -239,7 +239,7 @@ mod imp {
 
     /// Reply for [`RemoveUuid`]
     #[derive(Debug, Unpack)]
-    pub struct RemoveUuidReply(super::ClassOfDevice);
+    pub struct RemoveUuidReply(pub super::ClassOfDevice);
 
     /// Load Link Keys Command
     ///
@@ -262,7 +262,7 @@ mod imp {
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
     #[derive(Debug, Pack)]
     #[command(code = 0x0013, reply = LoadLongTermKeyReply)]
-    pub struct LoadLongTermKey(Vec<super::LongTermKey>);
+    pub struct LoadLongTermKey(pub Vec<super::LongTermKey>);
 
     /// Reply for [`LoadLongTermKey`]
     #[derive(Debug, Unpack)]
@@ -296,7 +296,7 @@ mod imp {
 
     /// Reply for [`GetConnections`]
     #[derive(Debug, Unpack)]
-    pub struct GetConnectionsReply(Vec<(super::Address, super::AddressType)>);
+    pub struct GetConnectionsReply(pub Vec<(super::Address, super::AddressType)>);
 
     /// PIN Code Reply Command
     ///
@@ -342,7 +342,7 @@ mod imp {
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
     #[derive(Debug, Pack)]
     #[command(code = 0x0018, reply = SetIoCapabilityReply)]
-    pub struct SetIoCapability(super::IoCapability);
+    pub struct SetIoCapability(pub super::IoCapability);
 
     /// Reply for [`SetIoCapability`]
     #[derive(Debug, Unpack)]
@@ -540,11 +540,11 @@ mod imp {
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
     #[derive(Debug, Pack)]
     #[command(code = 0x0023, reply = StartDiscoveryReply)]
-    pub struct StartDiscovery(super::AddressTypes);
+    pub struct StartDiscovery(pub super::AddressTypes);
 
     /// Reply for [`StartDiscovery`]
     #[derive(Debug, Unpack)]
-    pub struct StartDiscoveryReply(super::AddressTypes);
+    pub struct StartDiscoveryReply(pub super::AddressTypes);
 
     /// Stop Discovery Command
     ///
@@ -552,11 +552,11 @@ mod imp {
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
     #[derive(Debug, Pack)]
     #[command(code = 0x0024, reply = StopDiscoveryReply)]
-    pub struct StopDiscovery(super::AddressTypes);
+    pub struct StopDiscovery(pub super::AddressTypes);
 
     /// Reply for [`StopDiscovery`]
     #[derive(Debug, Unpack)]
-    pub struct StopDiscoveryReply(super::AddressTypes);
+    pub struct StopDiscoveryReply(pub super::AddressTypes);
 
     /// Confirm Name Command
     ///
@@ -636,11 +636,11 @@ mod imp {
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
     #[derive(Debug, Pack)]
     #[command(code = 0x0029, reply = SetAdvertisingReply)]
-    pub struct SetAdvertising(super::Advertising);
+    pub struct SetAdvertising(pub super::Advertising);
 
     /// Reply for [`SetAdvertising`]
     #[derive(Debug, Unpack)]
-    pub struct SetAdvertisingReply(super::Settings);
+    pub struct SetAdvertisingReply(pub super::Settings);
 
     /// Set BR/EDR Command
     ///
@@ -648,11 +648,11 @@ mod imp {
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
     #[derive(Debug, Pack)]
     #[command(code = 0x002A, reply = SetBrEdrReply)]
-    pub struct SetBrEdr(bool);
+    pub struct SetBrEdr(pub bool);
 
     /// Reply for [`SetBrEdr`]
     #[derive(Debug, Unpack)]
-    pub struct SetBrEdrReply(super::Settings);
+    pub struct SetBrEdrReply(pub super::Settings);
 
     /// Read Management Version Information Command
     ///
@@ -660,11 +660,11 @@ mod imp {
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
     #[derive(Debug, Pack)]
     #[command(code = 0x002B, reply = SetStaticAddressReply)]
-    pub struct SetStaticAddress(super::Address);
+    pub struct SetStaticAddress(pub super::Address);
 
     /// Reply for [`SetStaticAddress`]
     #[derive(Debug, Unpack)]
-    pub struct SetStaticAddressReply(super::Settings);
+    pub struct SetStaticAddressReply(pub super::Settings);
 
     /// Set Scan Parameters Command
     ///
@@ -687,11 +687,11 @@ mod imp {
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
     #[derive(Debug, Pack)]
     #[command(code = 0x002D, reply = SetSecureConnectionsReply)]
-    pub struct SetSecureConnections(super::SecureConnections);
+    pub struct SetSecureConnections(pub super::SecureConnections);
 
     /// Reply for [`SetSecureConnections`]
     #[derive(Debug, Unpack)]
-    pub struct SetSecureConnectionsReply(super::Settings);
+    pub struct SetSecureConnectionsReply(pub super::Settings);
 
     /// Set Debug Keys Command
     ///
@@ -699,11 +699,11 @@ mod imp {
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
     #[derive(Debug, Pack)]
     #[command(code = 0x002E, reply = SetDebugKeysReply)]
-    pub struct SetDebugKeys(super::DebugKeys);
+    pub struct SetDebugKeys(pub super::DebugKeys);
 
     /// Reply for [`SetDebugKeys`]
     #[derive(Debug, Unpack)]
-    pub struct SetDebugKeysReply(super::Settings);
+    pub struct SetDebugKeysReply(pub super::Settings);
 
     /// Set Privacy Command
     ///
@@ -717,8 +717,8 @@ mod imp {
     }
 
     /// Reply for [`SetPrivacy`]
-    #[derive(Debug, Pack)]
-    pub struct SetPrivacyReply(super::Settings);
+    #[derive(Debug, Unpack)]
+    pub struct SetPrivacyReply(pub super::Settings);
 
     /// Load Identity Resolving Keys Command
     ///
@@ -726,7 +726,7 @@ mod imp {
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
     #[derive(Debug, Pack)]
     #[command(code = 0x0030, reply = LoadIdentityResolvingKeysReply)]
-    pub struct LoadIdentityResolvingKeys(Vec<super::IdentityResolvingKey>);
+    pub struct LoadIdentityResolvingKeys(pub Vec<super::IdentityResolvingKey>);
 
     /// Reply for [`LoadIdentityResolvingKeys`]
     #[derive(Debug, Unpack)]
@@ -817,7 +817,7 @@ mod imp {
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
     #[derive(Debug, Pack)]
     #[command(code = 0x0035, reply = LoadConnectionParametersReply)]
-    pub struct LoadConnectionParameters(Vec<super::ConnectionParameter>);
+    pub struct LoadConnectionParameters(pub Vec<super::ConnectionParameter>);
 
     /// Reply for [`LoadConnectionParameters`]
     #[derive(Debug, Unpack)]
@@ -833,7 +833,7 @@ mod imp {
 
     /// Reply for [`ReadUnconfiguredControllerIndexList`]
     #[derive(Debug, Unpack)]
-    pub struct ReadUnconfiguredControllerIndexListReply(Vec<ControllerIndex>);
+    pub struct ReadUnconfiguredControllerIndexListReply(pub Vec<ControllerIndex>);
 
     /// Read Controller Configuration Information Command
     ///
@@ -857,11 +857,11 @@ mod imp {
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
     #[derive(Debug, Pack)]
     #[command(code = 0x0038, reply = SetExternalConfigurationReply)]
-    pub struct SetExternalConfiguration(bool);
+    pub struct SetExternalConfiguration(pub bool);
 
     /// Reply for [`SetExternalConfiguration`]
     #[derive(Debug, Unpack)]
-    pub struct SetExternalConfigurationReply(super::ControllerConfigurationOption);
+    pub struct SetExternalConfigurationReply(pub super::ControllerConfigurationOption);
 
     /// Set Public Address Command
     ///
@@ -869,11 +869,11 @@ mod imp {
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
     #[derive(Debug, Pack)]
     #[command(code = 0x0039, reply = SetPublicAddressReply)]
-    pub struct SetPublicAddress(super::Address);
+    pub struct SetPublicAddress(pub super::Address);
 
     /// Reply for [`SetPublicAddress`]
     #[derive(Debug, Unpack)]
-    pub struct SetPublicAddressReply(super::ControllerConfigurationOption);
+    pub struct SetPublicAddressReply(pub super::ControllerConfigurationOption);
 
     /// Start Service Discovery Command
     ///
@@ -889,7 +889,7 @@ mod imp {
 
     /// Reply for [`StartServiceDiscovery`]
     #[derive(Debug, Unpack)]
-    pub struct StartServiceDiscoveryReply(super::AddressTypes);
+    pub struct StartServiceDiscoveryReply(pub super::AddressTypes);
 
     /// Read Local Out Of Band Extended Data Command
     ///
@@ -897,7 +897,7 @@ mod imp {
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
     #[derive(Debug, Pack)]
     #[command(code = 0x003B, reply = ReadLocalOutOfBandExtendedDataReply)]
-    pub struct ReadLocalOutOfBandExtendedData(super::AddressTypes);
+    pub struct ReadLocalOutOfBandExtendedData(pub super::AddressTypes);
 
     /// Reply for [`ReadLocalOutOfBandExtendedData`]
     #[derive(Debug, Unpack)]
@@ -916,7 +916,7 @@ mod imp {
 
     /// Reply for [`ReadExtendedControllerIndexList`]
     #[derive(Debug, Unpack)]
-    pub struct ReadExtendedControllerIndexListReply(Vec<(ControllerIndex, super::ControllerType, super::ControllerBus)>);
+    pub struct ReadExtendedControllerIndexListReply(pub Vec<(ControllerIndex, super::ControllerType, super::ControllerBus)>);
 
     /// Read Advertising Features Command
     ///
@@ -962,11 +962,11 @@ mod imp {
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
     #[derive(Debug, Pack)]
     #[command(code = 0x003F, reply = RemoveAdvertisingReply)]
-    pub struct RemoveAdvertising(super::AdvertiseInstance);
+    pub struct RemoveAdvertising(pub super::AdvertiseInstance);
 
     /// Reply for [`RemoveAdvertising`]
     #[derive(Debug, Unpack)]
-    pub struct RemoveAdvertisingReply(super::AdvertiseInstance);
+    pub struct RemoveAdvertisingReply(pub super::AdvertiseInstance);
 
     /// Get Advertising Size Information Command
     ///
@@ -994,11 +994,11 @@ mod imp {
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
     #[derive(Debug, Pack)]
     #[command(code = 0x0041, reply = StartLimitedDiscoveryReply)]
-    pub struct StartLimitedDiscovery(super::AddressTypes);
+    pub struct StartLimitedDiscovery(pub super::AddressTypes);
 
     /// Reply for [`StartLimitedDiscovery`]
     #[derive(Debug, Unpack)]
-    pub struct StartLimitedDiscoveryReply(super::AddressTypes);
+    pub struct StartLimitedDiscoveryReply(pub super::AddressTypes);
 
     /// Read Extended Controller Information Command
     ///
@@ -1006,8 +1006,7 @@ mod imp {
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
     #[derive(Debug, Pack)]
     #[command(code = 0x0042, reply = ReadExtendedControllerInformationReply)]
-    pub struct ReadExtendedControllerInformation {
-    }
+    pub struct ReadExtendedControllerInformation;
 
     /// Reply for [`ReadExtendedControllerInformation`]
     #[derive(Debug, Unpack)]
@@ -1026,7 +1025,7 @@ mod imp {
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
     #[derive(Debug, Pack)]
     #[command(code = 0x0043, reply = SetApperanceReply)]
-    pub struct SetApperance(u16);
+    pub struct SetApperance(pub u16);
 
     /// Reply for [`SetApperance`]
     #[derive(Debug, Unpack)]
@@ -1053,7 +1052,7 @@ mod imp {
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
     #[derive(Debug, Pack)]
     #[command(code = 0x0045, reply = SetPhyConfigurationReply)]
-    pub struct SetPhyConfiguration(super::Phys);
+    pub struct SetPhyConfiguration(pub super::Phys);
 
     /// Reply for [`SetPhyConfiguration`]
     #[derive(Debug, Unpack)]
@@ -1065,7 +1064,7 @@ mod imp {
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
     #[derive(Debug, Pack)]
     #[command(code = 0x0046, reply = LoadBlockedKeysReply)]
-    pub struct LoadBlockedKeys(Vec<super::BlockedKey>);
+    pub struct LoadBlockedKeys(pub Vec<super::BlockedKey>);
 
     /// Reply for [`LoadBlockedKeys`]
     #[derive(Debug, Unpack)]
@@ -1077,11 +1076,11 @@ mod imp {
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
     #[derive(Debug, Pack)]
     #[command(code = 0x0047, reply = SetWidbandSpeechReply)]
-    pub struct SetWidbandSpeech(bool);
+    pub struct SetWidbandSpeech(pub bool);
 
     /// Reply for [`SetWidbandSpeech`]
     #[derive(Debug, Unpack)]
-    pub struct SetWidbandSpeechReply(super::Settings);
+    pub struct SetWidbandSpeechReply(pub super::Settings);
 
     /// Read Security Information Command
     ///
@@ -1093,7 +1092,7 @@ mod imp {
 
     /// Reply for [`ReadSecurityInformation`]
     #[derive(Debug, Unpack)]
-    pub struct ReadSecurityInformationReply(super::VariableLengthBytes);
+    pub struct ReadSecurityInformationReply(pub super::VariableLengthBytes);
 
     /// Read Experimental Features Information Command
     ///
@@ -1105,7 +1104,7 @@ mod imp {
 
     /// Reply for [`ReadExperimentalFeaturesInformation`]
     #[derive(Debug, Unpack)]
-    pub struct ReadExperimentalFeaturesInformationReply(Vec<(super::Uuid, super::FeatureFlags)>);
+    pub struct ReadExperimentalFeaturesInformationReply(pub Vec<(super::Uuid, super::FeatureFlags)>);
 
     /// Set Experimental Feature Command
     ///
@@ -1135,7 +1134,7 @@ mod imp {
 
     /// Reply for [`ReadDefaultSystemConfiguration`]
     #[derive(Debug, Unpack)]
-    pub struct ReadDefaultSystemConfigurationReply(super::Remaining<super::SystemConfigurationParameter>);
+    pub struct ReadDefaultSystemConfigurationReply(pub super::Remaining<super::SystemConfigurationParameter>);
 
     /// Set Default System Configuration Command
     ///
@@ -1143,7 +1142,7 @@ mod imp {
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
     #[derive(Debug, Pack)]
     #[command(code = 0x004C, reply = SetDefaultSystemConfigurationReply)]
-    pub struct SetDefaultSystemConfiguration(super::Remaining<super::SystemConfigurationParameter>);
+    pub struct SetDefaultSystemConfiguration(pub super::Remaining<super::SystemConfigurationParameter>);
 
     /// Reply for [`SetDefaultSystemConfiguration`]
     #[derive(Debug, Unpack)]
@@ -1159,7 +1158,7 @@ mod imp {
 
     /// Reply for [`ReadDefaultRuntimeConfiguration`]
     #[derive(Debug, Unpack)]
-    pub struct ReadDefaultRuntimeConfigurationReply(super::Remaining<super::RuntimeConfigurationParameter>);
+    pub struct ReadDefaultRuntimeConfigurationReply(pub super::Remaining<super::RuntimeConfigurationParameter>);
 
     /// Read Management Version Information Command
     ///
@@ -1167,7 +1166,7 @@ mod imp {
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
     #[derive(Debug, Pack)]
     #[command(code = 0x004E, reply = SetDefaultRuntimeConfigurationReply)]
-    pub struct SetDefaultRuntimeConfiguration(super::Remaining<super::RuntimeConfigurationParameter>);
+    pub struct SetDefaultRuntimeConfiguration(pub super::Remaining<super::RuntimeConfigurationParameter>);
 
     /// Reply for [`SetDefaultRuntimeConfiguration`]
     #[derive(Debug, Unpack)]
@@ -1236,11 +1235,11 @@ mod imp {
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
     #[derive(Debug, Pack)]
     #[command(code = 0x0052, reply = AddAdvertisementPatternsMonitorReply)]
-    pub struct AddAdvertisementPatternsMonitor(Vec<super::AdvertisementPattern>);
+    pub struct AddAdvertisementPatternsMonitor(pub Vec<super::AdvertisementPattern>);
 
     /// Reply for [`AddAdvertisementPatternsMonitor`]
     #[derive(Debug, Unpack)]
-    pub struct AddAdvertisementPatternsMonitorReply(super::AdvertisementMonitorHandle);
+    pub struct AddAdvertisementPatternsMonitorReply(pub super::AdvertisementMonitorHandle);
 
     /// Remove Advertisement Monitor Command
     ///
@@ -1248,11 +1247,11 @@ mod imp {
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
     #[derive(Debug, Pack)]
     #[command(code = 0x0053, reply = RemoveAdvertisementPatternsMonitorReply)]
-    pub struct RemoveAdvertisementPatternsMonitor(super::AdvertisementMonitorHandle);
+    pub struct RemoveAdvertisementPatternsMonitor(pub super::AdvertisementMonitorHandle);
 
     /// Reply for [`RemoveAdvertisementPatternsMonitor`]
     #[derive(Debug, Unpack)]
-    pub struct RemoveAdvertisementPatternsMonitorReply(super::AdvertisementMonitorHandle);
+    pub struct RemoveAdvertisementPatternsMonitorReply(pub super::AdvertisementMonitorHandle);
 
 }
 

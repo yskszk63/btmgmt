@@ -1,14 +1,13 @@
+use futures::StreamExt;
+
 use btmgmt::command::*;
 use btmgmt::*;
-
-use tokio_stream::StreamExt;
 
 #[tokio::main(flavor = "current_thread")]
 async fn main() {
     pretty_env_logger::init();
 
-    let (client, handle) = Client::open().unwrap();
-    let handle = tokio::spawn(handle);
+    let client = Client::new().unwrap();
 
     let mut events = client.events().await;
     tokio::spawn(async move {
@@ -18,27 +17,24 @@ async fn main() {
     });
 
     let r = client
-        .call(None, ReadManagementVersionInformation::new())
+        .call(None, ReadManagementVersionInformation)
         .await
         .unwrap();
     dbg!(r);
     let r = client
-        .call(None, ReadManagementSupportedCommands::new())
+        .call(None, ReadManagementSupportedCommands)
         .await
         .unwrap();
     dbg!(r);
     let r = client
-        .call(None, ReadControllerIndexList::new())
+        .call(None, ReadControllerIndexList)
         .await
         .unwrap();
-    for index in r {
+    for index in r.0 {
         let r = client
-            .call(index.clone(), ReadControllerInformation::new())
+            .call(index.clone(), ReadControllerInformation)
             .await
             .unwrap();
         println!("{:?}", r);
     }
-
-    drop(client);
-    handle.await.unwrap().unwrap()
 }

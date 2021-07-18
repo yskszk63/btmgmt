@@ -36,7 +36,7 @@ mod imp {
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
     #[derive(Debug, Clone, Unpack)]
     #[event(0x0003)]
-    pub struct ControllerError(ErrorCode);
+    pub struct ControllerError(pub ErrorCode);
 
     /// Index Added Event
     ///
@@ -60,7 +60,7 @@ mod imp {
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
     #[derive(Debug, Clone, Unpack)]
     #[event(0x0006)]
-    pub struct NewSettings(super::Settings);
+    pub struct NewSettings(pub super::Settings);
 
     /// Class Of Device Changed Event
     ///
@@ -68,7 +68,7 @@ mod imp {
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
     #[derive(Debug, Clone, Unpack)]
     #[event(0x0007)]
-    pub struct ClassOfDeviceChanged(super::ClassOfDevice);
+    pub struct ClassOfDeviceChanged(pub super::ClassOfDevice);
 
     /// Local Name Changed Event
     ///
@@ -343,7 +343,7 @@ mod imp {
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
     #[derive(Debug, Clone, Unpack)]
     #[event(0x001F)]
-    pub struct NewConfigurationOptions(super::ControllerConfigurationOption);
+    pub struct NewConfigurationOptions(pub super::ControllerConfigurationOption);
 
     /// Extended Index Added Event
     ///
@@ -384,7 +384,7 @@ mod imp {
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
     #[derive(Debug, Clone, Unpack)]
     #[event(0x0023)]
-    pub struct AdvertisingAdded(super::AdvertiseInstance);
+    pub struct AdvertisingAdded(pub super::AdvertiseInstance);
 
     /// Advertising Removed Event
     ///
@@ -392,7 +392,7 @@ mod imp {
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
     #[derive(Debug, Clone, Unpack)]
     #[event(0x0024)]
-    pub struct AdvertisingRemoved(super::AdvertiseInstance);
+    pub struct AdvertisingRemoved(pub super::AdvertiseInstance);
 
     /// Extended Controller Information Changed Event
     ///
@@ -400,7 +400,7 @@ mod imp {
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
     #[derive(Debug, Clone, Unpack)]
     #[event(0x0025)]
-    pub struct ExtendedControllerInformationChanged(super::VariableLengthBytes);
+    pub struct ExtendedControllerInformationChanged(pub super::VariableLengthBytes);
 
     /// PHY Configuration Changed Event
     ///
@@ -408,7 +408,7 @@ mod imp {
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
     #[derive(Debug, Clone, Unpack)]
     #[event(0x0026)]
-    pub struct PhyConfigurationChanged(super::Phys);
+    pub struct PhyConfigurationChanged(pub super::Phys);
 
     /// Experimental Feature Changed Event
     ///
@@ -427,7 +427,7 @@ mod imp {
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
     #[derive(Debug, Clone, Unpack)]
     #[event(0x0028)]
-    pub struct DefaultSystemConfigurationChanged(super::Remaining<super::SystemConfigurationParameter>);
+    pub struct DefaultSystemConfigurationChanged(pub super::Remaining<super::SystemConfigurationParameter>);
 
     /// Default Runtime Configuration Changed Event
     ///
@@ -435,7 +435,7 @@ mod imp {
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
     #[derive(Debug, Clone, Unpack)]
     #[event(0x0029)]
-    pub struct DefaultRuntimeConfigurationChanged(super::Remaining<super::RuntimeConfigurationParameter>);
+    pub struct DefaultRuntimeConfigurationChanged(pub super::Remaining<super::RuntimeConfigurationParameter>);
 
     /// Device Flags Changed Event
     ///
@@ -456,7 +456,7 @@ mod imp {
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
     #[derive(Debug, Clone, Unpack)]
     #[event(0x002B)]
-    pub struct AdvertisementMonitorAdded(super::AdvertisementMonitorHandle);
+    pub struct AdvertisementMonitorAdded(pub super::AdvertisementMonitorHandle);
 
     /// Advertisement Monitor Removed Event
     ///
@@ -464,7 +464,7 @@ mod imp {
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
     #[derive(Debug, Clone, Unpack)]
     #[event(0x002C)]
-    pub struct AdvertisementMonitorRemoved(super::AdvertisementMonitorHandle);
+    pub struct AdvertisementMonitorRemoved(pub super::AdvertisementMonitorHandle);
 
     /// Controller Suspend Event
     ///
@@ -472,7 +472,7 @@ mod imp {
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
     #[derive(Debug, Clone, Unpack)]
     #[event(0x002D)]
-    pub struct ControllerSuspend(super::SuspendState);
+    pub struct ControllerSuspend(pub super::SuspendState);
 
     /// Controller Resume Event
     ///

@@ -72,24 +72,23 @@
 //! Unless you explicitly state otherwise, any contribution intentionally submitted
 //! for inclusion in the work by you, as defined in the Apache-2.0 license, shall be
 //! dual licensed as above, without any additional terms or conditions.!
+use btmgmt_packet as packet;
+
 pub use bdaddr::{Address, AddressParseError};
 pub use client::Client;
 pub use packet::{
-    command, event, Action, AddressType, AdvertiseInstance, AdvertisementMonitorFeatures,
+    pack, command, event, Action, AddressType, AdvertiseInstance, AdvertisementMonitorFeatures,
     AdvertisementMonitorHandle, AdvertisementPattern, Advertising, AdvertisingFlag, BlockedKey,
     ClassOfDevice, ConfirmHint, ConnectionParameter, ControllerBus, ControllerConfigurationOption,
     ControllerIndex, ControllerType, DeviceConnectFlags, DeviceDisconnectReason, DeviceFlags,
     Discoverable, ErrorCode, FeatureAction, FeatureFlags, IdentityResolvingKey, IoCapability,
-    LinkKey, LinkKeyType, LongTermKey, LongTermKeyBuilder, LongTermKeyType, Name, NameError, Phys,
+    LinkKey, LinkKeyType, LongTermKey, LongTermKeyType, Name, NameError, Phys,
     Privacy, RuntimeConfigurationParameter, RuntimeConfigurationParameterType, SecureConnections,
     Settings, ShortName, SignatureResolvingKey, SuspendState, SystemConfigurationParameter,
     SystemConfigurationParameterType, Uuid, WakeReason,
 };
 
-#[macro_use]
-mod pack;
-
-pub mod client;
-mod packet;
+//pub mod client;
 mod sock;
-mod client2;
+#[path = "client2.rs"]
+pub mod client;

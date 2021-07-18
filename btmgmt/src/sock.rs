@@ -1,4 +1,3 @@
-use std::future::Future;
 use std::io;
 use std::mem::{self, MaybeUninit};
 use std::pin::Pin;
@@ -8,16 +7,7 @@ use std::task::{Context, Poll};
 use libc::{c_int, c_ushort, sa_family_t, sockaddr, socklen_t};
 use socket2::{Domain, Protocol, SockAddr, Socket, Type};
 use tokio::io::unix::AsyncFd;
-use tokio::io::ReadBuf;
-
-macro_rules! ready {
-    ($e:expr) => {
-        match $e {
-            Poll::Pending => return Poll::Pending,
-            Poll::Ready(e) => e,
-        }
-    };
-}
+use tokio::io::{ReadBuf, AsyncRead, AsyncWrite};
 
 // <bluetooth/hci.h>
 const BTPROTO_HCI: c_int = 1;
@@ -70,44 +60,6 @@ fn mgmt_create() -> io::Result<Socket> {
 }
 
 #[derive(Debug)]
-pub(crate) struct Send<'a, 'b>(&'a AsyncFd<Socket>, &'b [u8]);
-
-impl<'a, 'b> Future for Send<'a, 'b> {
-    type Output = io::Result<usize>;
-
-    fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
-        let Send(sock, buf) = self.get_mut();
-
-        loop {
-            let mut guard = ready!(sock.poll_write_ready(cx))?;
-            let r = guard.try_io(|fd| fd.get_ref().send(buf));
-            if let Ok(r) = r {
-                return Poll::Ready(r);
-            }
-        }
-    }
-}
-
-#[derive(Debug)]
-pub(crate) struct Recv<'a, 'b>(&'a AsyncFd<Socket>, ReadBuf<'b>);
-
-impl<'a, 'b> Future for Recv<'a, 'b> {
-    type Output = io::Result<usize>;
-
-    fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
-        let Recv(sock, buf) = self.get_mut();
-
-        loop {
-            let mut guard = ready!(sock.poll_read_ready(cx))?;
-            let r = guard.try_io(|fd| fd.get_ref().recv(unsafe { buf.unfilled_mut() }));
-            if let Ok(r) = r {
-                return Poll::Ready(r);
-            }
-        }
-    }
-}
-
-#[derive(Debug)]
 pub(crate) struct MgmtSocket {
     inner: AsyncFd<Socket>,
 }
@@ -118,12 +70,44 @@ impl MgmtSocket {
         let sock = AsyncFd::new(sock)?;
         Ok(Self { inner: sock })
     }
+}
 
-    pub(crate) fn send<'b>(&self, buf: &'b [u8]) -> Send<'_, 'b> {
-        Send(&self.inner, buf)
+impl AsyncRead for MgmtSocket {
+    fn poll_read(self: Pin<&mut Self>, cx: &mut Context<'_>, buf: &mut ReadBuf<'_>) -> Poll<io::Result<()>> {
+        let mut guard = match self.inner.poll_read_ready(cx)? {
+            Poll::Ready(guard) => guard,
+            Poll::Pending => return Poll::Pending,
+        };
+        let result = guard.try_io(|fd| fd.get_ref().recv(unsafe { buf.unfilled_mut() }));
+        match result {
+            Ok(Ok(n)) => {
+                unsafe { buf.assume_init(n); }
+                buf.advance(n);
+                Poll::Ready(Ok(()))
+            }
+            Ok(Err(err)) => Poll::Ready(Err(err)),
+            Err(..) => Poll::Pending,
+        }
     }
+}
 
-    pub(crate) fn recv<'b>(&self, buf: &'b mut [u8]) -> Recv<'_, 'b> {
-        Recv(&self.inner, ReadBuf::new(buf))
+impl AsyncWrite for MgmtSocket {
+    fn poll_write(self: Pin<&mut Self>, cx: &mut Context<'_>, buf: &[u8]) -> Poll<Result<usize, io::Error>> {
+        let mut guard = match self.inner.poll_write_ready(cx)? {
+            Poll::Ready(guard) => guard,
+            Poll::Pending => return Poll::Pending,
+        };
+        let result = guard.try_io(|fd| fd.get_ref().send(buf));
+        match result {
+            Ok(Ok(n)) => Poll::Ready(Ok(n)),
+            Ok(Err(err)) => Poll::Ready(Err(err)),
+            Err(..) => Poll::Pending,
+        }
+    }
+    fn poll_flush(self: Pin<&mut Self>, _: &mut Context<'_>) -> Poll<Result<(), io::Error>> {
+        Poll::Ready(Ok(()))
+    }
+    fn poll_shutdown(self: Pin<&mut Self>, _: &mut Context<'_>) -> Poll<Result<(), io::Error>> {
+        Poll::Ready(Ok(()))
     }
 }
