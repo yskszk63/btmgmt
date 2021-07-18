@@ -74,10 +74,9 @@
 //! dual licensed as above, without any additional terms or conditions.!
 use btmgmt_packet as packet;
 
-pub use bdaddr::{Address, AddressParseError};
 pub use client::Client;
 pub use packet::{
-    pack, command, event, Action, AddressType, AdvertiseInstance, AdvertisementMonitorFeatures,
+    pack, command, event, Action, Address, AddressType, AdvertiseInstance, AdvertisementMonitorFeatures,
     AdvertisementMonitorHandle, AdvertisementPattern, Advertising, AdvertisingFlag, BlockedKey,
     ClassOfDevice, ConfirmHint, ConnectionParameter, ControllerBus, ControllerConfigurationOption,
     ControllerIndex, ControllerType, DeviceConnectFlags, DeviceDisconnectReason, DeviceFlags,
@@ -88,6 +87,5 @@ pub use packet::{
     SystemConfigurationParameterType, Uuid, WakeReason,
 };
 
-//pub mod client;
 mod sock;
 pub mod client;

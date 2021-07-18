@@ -1,7 +1,31 @@
+[package]
+name = "btmgmt"
+version = "0.1.0"
+authors = ["yskszk63 <yskszk63@gmail.com>"]
+edition = "2018"
+description = "Linux Management API Client"
+repository = "https://github.com/yskszk63/btmgmt"
+license = "MIT OR Apache-2.0"
+keywords = ["bluetooth"]
+readme = "README.md"
+
+[dependencies]
+futures = "0.3"
+tokio = { version = "1.8", features = ["macros", "net", "sync"] }
+socket2 = { version = "0.4", features = ["all"] }
+libc = "0.2"
+bytes = "1.0"
+thiserror = "1.0"
+log = "0.4"
+btmgmt-packet = { path = "packet" }
+
+[dev-dependencies]
+tokio = { version = "1.8", features = ["rt"] }
+pretty_env_logger = "0.4"
+
 [workspace]
 members = [
-    "btmgmt",
-    "btmgmt-cli",
+    "cli",
     "packet",
     "packet/macros",
     "packet/helper",

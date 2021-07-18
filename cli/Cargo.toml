@@ -8,7 +8,7 @@ license = "MIT OR Apache-2.0"
 keywords = ["bluetooth"]
 
 [dependencies]
-btmgmt = { path="../btmgmt", version = "0.1.0" }
+btmgmt = { path="..", version = "0.1.0" }
 clap = "3.0.0-beta.2"
 anyhow = "1.0"
 tokio = { version="0.3", features=["rt", "macros", "net", "sync"] }
