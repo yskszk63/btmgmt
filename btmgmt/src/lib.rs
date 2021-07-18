@@ -90,5 +90,4 @@ pub use packet::{
 
 //pub mod client;
 mod sock;
-#[path = "client2.rs"]
 pub mod client;

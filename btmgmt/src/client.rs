@@ -1,259 +1,393 @@
-//! mgmt API client.
-use std::collections::HashMap;
-use std::future::Future;
-use std::io;
+use std::mem::MaybeUninit;
 use std::pin::Pin;
 use std::sync::Arc;
-use std::task::{Context, Poll};
+use std::task::{Context, Poll, Waker};
+use std::future::Future;
 
-use bytes::{Bytes, BytesMut};
-use tokio::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
-use tokio::sync::oneshot::{self, Sender};
-use tokio::sync::Mutex;
-use futures::Stream;
+use futures::{Sink, Stream, FutureExt, StreamExt, SinkExt};
+use futures::lock::Mutex;
+use futures::stream::{SplitSink, SplitStream};
+use bytes::{Buf, BufMut, BytesMut};
+use tokio::io::{self, AsyncRead, AsyncWrite, ReadBuf};
+use tokio::sync::mpsc;
 
-use crate::pack::{Error as UnpackError, Pack, Unpack};
-use crate::packet::command::{Command, CommandCode, CommandInternal};
-use crate::packet::event::{CommandComplete, CommandStatus, Event};
-use crate::packet::{ControllerIndex, ErrorCode};
+use crate::pack::{self, Unpack};
+use crate::ControllerIndex;
+use crate::event::{self, Events};
+use crate::command::{self, Commands};
 use crate::sock::MgmtSocket;
 
-/// Management API Client's Error.
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
-    #[error("channel send error.")]
-    ChannelSend,
-    #[error("channel recieve error. {0:}")]
-    ChannelRecv(#[from] oneshot::error::RecvError),
-    #[error("recieved data error. {0:}")]
-    RecievedData(#[from] UnpackError),
-    #[error("error reply. {0:?}")]
-    ErrorReply(ErrorCode),
-    #[error("empty reply")]
-    EmptyReply,
-}
-
-/// IO loop task Error.
-#[derive(Debug, thiserror::Error)]
-pub enum TaskError {
-    #[error("channel send error.")]
-    ChannelSend,
-    #[error("channel recieve error. {0:}")]
-    ChannelRecv(#[from] oneshot::error::RecvError),
-    #[error("recieved data error. {0:}")]
-    RecievedData(#[from] UnpackError),
-    #[error("io error. {0:}")]
+    #[error(transparent)]
     Io(#[from] io::Error),
+
+    #[error(transparent)]
+    Pack(#[from] pack::Error),
 }
 
-type Msg = (
-    ControllerIndex,
-    CommandCode,
-    Bytes,
-    Sender<(ErrorCode, Option<Bytes>)>,
-);
+pub type Result<T> = std::result::Result<T, Error>;
 
-type EventQueues = Vec<UnboundedSender<(ControllerIndex, Event)>>;
-
-#[derive(Debug)]
-struct Task {
-    ingress_rx: UnboundedReceiver<Msg>,
-    sock: MgmtSocket,
-    event_queues: Arc<Mutex<EventQueues>>,
+struct EventStream<IO> {
+    io: IO,
+    rxbuf: BytesMut,
+    txbuf: BytesMut,
 }
 
-impl Task {
-    fn new(
-        ingress_rx: UnboundedReceiver<Msg>,
-        sock: MgmtSocket,
-        event_queues: Arc<Mutex<EventQueues>>,
-    ) -> Self {
+impl<IO> EventStream<IO> {
+    fn new(io: IO) -> Self {
         Self {
-            ingress_rx,
-            sock,
-            event_queues,
+            io,
+            rxbuf: BytesMut::new(),
+            txbuf: BytesMut::new(),
+        }
+    }
+}
+
+impl<IO> Stream for EventStream<IO> where IO: AsyncRead + Unpin {
+    type Item = Result<(ControllerIndex, Events)>;
+
+    fn poll_next(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Option<Self::Item>> {
+        let Self { io, ref mut rxbuf, .. } = self.get_mut();
+
+        loop {
+            rxbuf.reserve(1024 * 8);
+
+            let dst = rxbuf.chunk_mut();
+            let dst = unsafe { &mut *(dst as *mut _ as *mut [MaybeUninit<u8>]) };
+            let mut b = ReadBuf::uninit(dst);
+            if Poll::Pending == Pin::new(io).poll_read(cx, &mut b)? {
+                return Poll::Pending;
+            };
+            let n = b.filled().len();
+            if n == 0 && !rxbuf.has_remaining() {
+                return Poll::Ready(None);
+            }
+            drop(b);
+            unsafe { rxbuf.advance_mut(n); }
+
+            // TODO partial read
+            let mut reader = rxbuf.reader();
+            let (index, event) = event::unpack_events(&mut reader)?;
+            *rxbuf = BytesMut::from(rxbuf.as_ref());
+            return Poll::Ready(Some(Ok((index, event))));
+        }
+    }
+}
+
+impl<IO> Sink<(ControllerIndex, Commands)> for EventStream<IO> where IO: AsyncWrite + Unpin {
+    type Error = Error;
+
+    fn poll_ready(self: Pin<&mut Self>, _: &mut Context<'_>) -> Poll<Result<()>> {
+        Poll::Ready(Ok(()))
+    }
+
+    fn start_send(self: Pin<&mut Self>, (index, commands): (ControllerIndex, Commands)) -> Result<()> {
+        let Self { txbuf, .. } = self.get_mut();
+
+        let mut write = txbuf.writer();
+        command::pack_command(&index, &commands, &mut write)?;
+        Ok(())
+    }
+
+    fn poll_flush(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Result<()>> {
+        let this = self.get_mut();
+
+        loop {
+            if this.txbuf.has_remaining() {
+                let n = match Pin::new(&mut this.io).poll_write(cx, &this.txbuf)? {
+                    Poll::Ready(n) => n,
+                    Poll::Pending => return Poll::Pending,
+                };
+                this.txbuf.advance(n);
+            } else {
+                if let Poll::Pending = Pin::new(&mut this.io).poll_flush(cx) {
+                    return Poll::Pending;
+                }
+                return Poll::Ready(Ok(()));
+            }
         }
     }
 
-    async fn run(self) -> Result<(), TaskError> {
-        const BUF_LEN: usize = 8 * 1024;
+    fn poll_close(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Result<()>> {
+        let Self { io, .. } = self.get_mut();
 
-        let mut buf = BytesMut::new();
-        buf.resize(BUF_LEN, 0);
+        if let Poll::Pending = Pin::new(io).poll_shutdown(cx)? {
+            return Poll::Pending;
+        }
 
-        let mut egress = HashMap::<_, Sender<_>>::new();
-        let Self {
-            mut ingress_rx,
-            sock,
-            event_queues,
-            ..
-        } = self;
+        Poll::Ready(Ok(()))
+    }
+}
 
+struct RecvInner<S> {
+    stream: S,
+    wakers: Vec<Waker>,
+    head: Option<Result<(ControllerIndex, Events)>>,
+    subscribers: Vec<mpsc::UnboundedSender<(ControllerIndex, Events)>>,
+}
+
+struct Recv<S> {
+    inner: Arc<Mutex<RecvInner<S>>>,
+}
+
+impl<S> Future for Recv<S> where S: Stream<Item = Result<(ControllerIndex, Events)>> + Unpin {
+    type Output = Result<Option<(ControllerIndex, Events)>>;
+
+    fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
         loop {
-            buf.resize(BUF_LEN, 0);
-            tokio::select! {
-                r = sock.recv(&mut buf) => {
-                    let len = r?;
+            let mut inner = match self.inner.lock().poll_unpin(cx) {
+                Poll::Ready(inner) => inner,
+                Poll::Pending => return Poll::Pending,
+            };
 
-                    let remain = buf.split_off(len);
-                    log::trace!("< {:X}", buf);
-                    let (index, event) = Unpack::unpack(&mut buf.as_ref())?;
-                    buf.unsplit(remain);
+            if let Some(head) = inner.head.take() {
+                return Poll::Ready(head.map(Some));
+            }
 
-                    match event {
-                        Event::CommandComplete(CommandComplete { opcode, status, data, .. }) => {
-                            if let Some(sender) = egress.remove(&(index, opcode)) {
-                                sender.send((status, Some(data))).map_err(|_| TaskError::ChannelSend)?;
-                            }
-                        }
-                        Event::CommandStatus(CommandStatus { opcode, status, .. }) => {
-                            if let Some(sender) = egress.remove(&(index, opcode)) {
-                                sender.send((status, None)).map_err(|_| TaskError::ChannelSend)?;
-                            }
-                        }
-                        e => {
-                            log::debug!("<< {:?}", e);
-                            let mut event_queues = event_queues.lock().await;
-                            event_queues.retain(|q| {
-                                q.send((index.clone(), e.clone())).is_ok()
-                            });
-                        }
+            let result = match inner.stream.poll_next_unpin(cx) {
+                Poll::Ready(result) => result,
+                Poll::Pending => return Poll::Pending,
+            };
+
+            for w in inner.wakers.drain(..) {
+                w.wake();
+            }
+
+            match result {
+                result @ Some(Ok((_, Events::CommandComplete(..) | Events::CommandStatus(..))) | Err(..)) => inner.head = result,
+                Some(Ok(events)) => {
+                    for tx in &inner.subscribers {
+                        tx.send(events.clone()).ok();
                     }
                 }
-                maybe_msg = ingress_rx.recv() => {
-                    if let Some((index, code, data, sender)) = maybe_msg {
-                        log::trace!("> {:X}", &data);
-                        sock.send(&data).await?;
-                        egress.insert((index, code), sender);
-                    } else {
-                        break Ok(());
-                    }
+                None => {
+                    inner.subscribers.clear();
+                    return Poll::Ready(Ok(None));
                 }
             }
         }
     }
 }
 
-/// Management API Event Stream.
-#[derive(Debug)]
-pub struct Events {
-    queue: UnboundedReceiver<(ControllerIndex, Event)>,
+struct Next<S> {
+    inner: Arc<Mutex<RecvInner<S>>>,
 }
 
-impl Stream for Events {
-    type Item = (ControllerIndex, Event);
-    fn poll_next(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Option<Self::Item>> {
-        Pin::new(&mut self.get_mut().queue).poll_recv(cx)
+impl<S> Future for Next<S> where S: Stream<Item = Result<(ControllerIndex, Events)>> + Unpin {
+    type Output = Option<()>;
+
+    fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
+        loop {
+            let mut inner = match self.inner.lock().poll_unpin(cx) {
+                Poll::Ready(inner) => inner,
+                Poll::Pending => return Poll::Pending,
+            };
+
+            if inner.head.is_some() {
+                inner.wakers.push(cx.waker().clone());
+                return Poll::Pending;
+            }
+
+            let result = match inner.stream.poll_next_unpin(cx) {
+                Poll::Ready(result) => result,
+                Poll::Pending => return Poll::Pending,
+            };
+
+            for w in inner.wakers.drain(..) {
+                w.wake();
+            }
+
+            match result {
+                result @ Some(Ok((_, Events::CommandComplete(..) | Events::CommandStatus(..))) | Err(..)) => inner.head = result,
+                Some(Ok(events)) => {
+                    for tx in &inner.subscribers {
+                        tx.send(events.clone()).ok();
+                    }
+                }
+                None => {
+                    inner.subscribers.clear();
+                    return Poll::Ready(None);
+                }
+            }
+        }
     }
 }
 
-/// Management API Client
-///
-/// # Example
-///
-/// ```no_run
-/// use btmgmt::Client;
-///
-/// # #[tokio::main(flavor = "current_thread")]
-/// # async fn main() {
-/// let (client, ioloop) = Client::open().unwrap();
-/// let handle = tokio::spawn(ioloop);
-///
-/// // Do staff
-///
-/// handle.await.unwrap().unwrap();
-/// # }
-/// ```
-#[derive(Debug)]
+struct Receive<S>(Arc<Mutex<RecvInner<S>>>);
+
+impl<S> Clone for Receive<S> {
+    fn clone(&self) -> Self {
+        Self(self.0.clone())
+    }
+}
+
+impl<S> Receive<S> {
+    fn new(stream: S) -> Self {
+        Self(Arc::new(Mutex::new(RecvInner {
+            stream,
+            wakers: Default::default(),
+            head: Default::default(),
+            subscribers: vec![],
+        })))
+    }
+}
+
+impl<S> Receive<S> where S: Stream<Item = Result<(ControllerIndex, Events)>> + Unpin {
+    fn recv(&self) -> Recv<S> {
+        Recv {
+            inner: self.0.clone(),
+        }
+    }
+
+    fn next(&self) -> Next<S> {
+        Next {
+            inner: self.0.clone(),
+        }
+    }
+
+    async fn subscribe(&self) -> mpsc::UnboundedReceiver<(ControllerIndex, Events)> {
+        let (tx, rx) = mpsc::unbounded_channel();
+
+        let mut inner = self.0.lock().await;
+        inner.subscribers.push(tx);
+        rx
+    }
+}
+
+pub struct EventSubscribe {
+    receive: Receive<SplitStream<EventStream<MgmtSocket>>>,
+    rx: mpsc::UnboundedReceiver<(ControllerIndex, Events)>,
+}
+
+impl Stream for EventSubscribe {
+    type Item = (ControllerIndex, Events);
+
+    fn poll_next(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Option<Self::Item>> {
+        let Self { receive, rx } = self.get_mut();
+
+        loop {
+            match rx.poll_recv(cx) {
+                Poll::Ready(result) => return Poll::Ready(result),
+                Poll::Pending => {}
+            }
+
+            match receive.next().poll_unpin(cx) {
+                Poll::Ready(..) => {}
+                Poll::Pending => return Poll::Pending,
+            }
+        }
+    }
+}
+
 pub struct Client {
-    ingress_tx: UnboundedSender<Msg>,
-    event_queues: Arc<Mutex<EventQueues>>,
+    rx:  Receive<SplitStream<EventStream<MgmtSocket>>>,
+    tx: Arc<Mutex<SplitSink<EventStream<MgmtSocket>, (ControllerIndex, Commands)>>>,
 }
 
 impl Client {
-    /// Construct Management API Client.
-    pub fn open() -> io::Result<(Self, impl Future<Output = Result<(), TaskError>>)> {
+    pub fn new() -> Result<Self> {
         let sock = MgmtSocket::new()?;
-        let (ingress_tx, ingress_rx) = mpsc::unbounded_channel();
-        let event_queues = Arc::new(Mutex::new(vec![]));
-        let task = Task::new(ingress_rx, sock, event_queues.clone());
-        let io_loop = task.run();
-        Ok((
-            Self {
-                ingress_tx,
-                event_queues,
-            },
-            io_loop,
-        ))
+        let stream = EventStream::new(sock);
+        let (tx, rx) = stream.split();
+        Ok(Self {
+            rx: Receive::new(rx),
+            tx: Arc::new(Mutex::new(tx)),
+        })
     }
 
-    /// Get Management API Event Stream.
-    ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// use btmgmt::Client;
-    /// use tokio_stream::StreamExt;
-    ///
-    /// # #[tokio::main(flavor = "current_thread")]
-    /// # async fn main() {
-    /// # let (client, ioloop) = Client::open().unwrap();
-    /// # let handle = tokio::spawn(ioloop);
-    /// let mut events = client.events().await;
-    ///
-    /// while let Some((index, event)) = events.next().await {
-    ///     // Do staff.
-    /// }
-    /// # }
-    /// ```
-    pub async fn events(&self) -> Events {
-        let (tx, rx) = mpsc::unbounded_channel();
-        let queues = self.event_queues.clone();
-        let mut queues = queues.lock().await;
-        queues.push(tx);
-        Events { queue: rx }
+    pub async fn events(&self) -> EventSubscribe {
+        let rx = self.rx.subscribe().await;
+        EventSubscribe {
+            receive: Receive(self.rx.0.clone()),
+            rx,
+        }
     }
 
-    /// Call Management API Command.
-    ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// use btmgmt::Client;
-    /// use btmgmt::command as cmd;
-    ///
-    /// # #[tokio::main(flavor = "current_thread")]
-    /// # async fn main() {
-    /// # let (client, ioloop) = Client::open().unwrap();
-    /// # let handle = tokio::spawn(ioloop);
-    /// // ...
-    /// let reply = client.call(0, cmd::ReadManagementVersionInformation::new()).await.unwrap();
-    /// // Do staff
-    /// # }
-    /// ```
-    pub async fn call<I, P>(&self, index: I, command: P) -> Result<P::Reply, Error>
-    where
-        I: Into<ControllerIndex>,
-        P: Command,
-    {
-        log::debug!(">> {:?}", command);
-        let index = index.into();
-        let command = CommandInternal::from((index.clone(), command));
-        let mut buf = BytesMut::new();
-        command.pack(&mut buf);
+    pub fn call<C, I>(&self, index: I, command: C) -> impl Future<Output = Result<C::Reply>> + 'static where C: command::Command + 'static, I: Into<ControllerIndex> {
+        let rx = self.rx.clone();
+        let tx = self.tx.clone();
 
-        let (tx, rx) = oneshot::channel();
-        self.ingress_tx
-            .send((index, P::CODE, buf.freeze(), tx))
-            .map_err(|_| Error::ChannelSend)?;
+        Self::call_inner(index.into(), command, rx, tx)
+    }
 
-        let (status, data) = rx.await?;
-        let reply = match (status, data) {
-            (status, Some(mut data)) if status.success() => Ok(P::Reply::unpack(&mut data)?),
-            (status, None) if status.success() => Err(Error::EmptyReply),
-            (status, _) => Err(Error::ErrorReply(status)),
+    async fn call_inner<C>(index: ControllerIndex,
+        command: C, rx: Receive<SplitStream<EventStream<MgmtSocket>>>,
+        tx: Arc<Mutex<SplitSink<EventStream<MgmtSocket>, (ControllerIndex, Commands)>>>) -> Result<C::Reply> where C: command::Command {
+        let command = command.into();
+
+        let mut tx = tx.lock().await;
+        tx.send((index.clone(), command)).await?;
+
+        let result = rx.recv().await?.unwrap(); // TODO EOF
+        if index != result.0 {
+            todo!()
+        }
+        match result.1 {
+            Events::CommandComplete(comp) => {
+                let mut data = &comp.data[..];
+                let result = C::Reply::unpack(&mut data)?;
+                Ok(result)
+            }
+            Events::CommandStatus(status) => {
+                todo!()
+            }
+            _ => todo!(),
+        }
+    }
+
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::event::CommandComplete;
+    use crate::packet::ErrorCode;
+    use crate::command::CommandCode;
+    use std::array::IntoIter;
+
+    use super::*;
+    use futures::{SinkExt, StreamExt};
+
+    #[tokio::test]
+    async fn test_stream_recv() {
+        let packet = IntoIter::new([0x01u8, 0x00, 0xFF, 0xFF, 0x06, 0x00, 0x01, 0x00, 0x00, 0x01, 0x13, 0x00])
+            .chain([0x01u8, 0x00, 0xFF, 0xFF, 0x06, 0x00, 0x01, 0x00, 0x00, 0x01, 0x13, 0x00])
+            .chain([0x01u8, 0x00, 0xFF, 0xFF, 0x06, 0x00, 0x01, 0x00, 0x00, 0x01, 0x13, 0x00])
+            .collect::<Vec<_>>();
+        let mut stream = EventStream {
+            io: &packet[..],
+            rxbuf: BytesMut::with_capacity(32),
+            txbuf: BytesMut::with_capacity(32),
         };
-        log::debug!("<< {:?}", reply);
-        reply
+
+        let mut n = 0usize;
+        while let Some(r) = stream.next().await {
+            let (index, event) = r.unwrap();
+            assert_eq!(ControllerIndex::NonController, index);
+            if let Events::CommandComplete(CommandComplete { opcode, status, data } ) = event {
+                assert_eq!(CommandCode::ReadManagementVersionInformation, opcode);
+                assert_eq!(ErrorCode::Success, status);
+                assert_eq!(&[0x01, 0x13, 0x00][..], data.as_ref());
+            } else {
+                panic!()
+            };
+            n += 1;
+        }
+        assert_eq!(3, n);
+    }
+
+    #[tokio::test]
+    async fn test_stream_send() {
+        let io = <Vec<u8>>::new();
+
+        let mut stream = EventStream {
+            io,
+            rxbuf: BytesMut::default(),
+            txbuf: BytesMut::default(),
+        };
+
+        let i = ControllerIndex::ControllerId(0);
+        let c = command::SetPowered(true).into();
+        stream.send((i, c)).await.unwrap();
     }
 }
