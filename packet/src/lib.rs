@@ -10,10 +10,25 @@ use std::str::FromStr;
 
 pub use btmgmt_packet_helper::pack::{self, Pack, Unpack};
 use bitflags::bitflags;
-use bdaddr::Address;
 
 pub mod command;
 pub mod event;
+
+#[derive(Debug, Clone)]
+pub struct Address(bdaddr::Address);
+
+impl Pack for Address {
+    fn pack<W>(&self, write: &mut W) -> pack::Result<()> where W: io::Write {
+        <[u8; 6]>::pack(&self.0.clone().into(), write)
+    }
+}
+
+impl Unpack for Address {
+    fn unpack<R>(read: &mut R) -> pack::Result<Self>
+    where R: io::Read {
+        <[u8; 6]>::unpack(read).map(|a| Self(a.into()))
+    }
+}
 
 #[derive(Debug, Clone, PartialEq, Eq, Pack, Unpack)]
 #[pack(u8)]

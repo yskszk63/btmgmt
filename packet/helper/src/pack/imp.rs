@@ -1,4 +1,3 @@
-use bdaddr::Address;
 use super::*;
 
 fn fill<R>(mut this: R, mut buf: &mut [u8]) -> Result<()>
@@ -303,19 +302,6 @@ impl<P1, P2, P3> Unpack for (P1, P2, P3) where P1: Unpack, P2: Unpack, P3: Unpac
     }
 }
 
-impl Pack for Address {
-    fn pack<W>(&self, write: &mut W) -> Result<()> where W: io::Write {
-        <[u8; 6]>::pack(&self.clone().into(), write)
-    }
-}
-
-impl Unpack for Address {
-    fn unpack<R>(read: &mut R) -> Result<Self>
-    where R: io::Read {
-        <[u8; 6]>::unpack(read).map(From::from)
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -489,22 +475,6 @@ mod tests {
             assert_eq!(b, buf);
 
             let v = <(bool, u8, u8)>::unpack(&mut &b[..]).unwrap();
-            assert_eq!(v, test);
-        }
-    }
-
-    #[test]
-    fn test_addr() {
-        let tests = [
-            ("00:11:22:33:44:55".parse::<Address>().unwrap(), &[0x55, 0x44, 0x33, 0x22, 0x11, 0x00][..]),
-        ];
-
-        for (test, buf) in tests {
-            let mut b = vec![];
-            test.pack(&mut b).unwrap();
-            assert_eq!(b, buf);
-
-            let v = <Address>::unpack(&mut &b[..]).unwrap();
             assert_eq!(v, test);
         }
     }
