@@ -1,5 +1,5 @@
 use proc_macro2::TokenStream;
-use syn::{Expr, Ident, Item, ItemMod, Token, parse_quote};
+use syn::{Attribute, Expr, Ident, Item, ItemMod, Token, parse_quote};
 use syn::parse::{Parse, ParseStream};
 use quote::ToTokens;
 
@@ -97,7 +97,7 @@ impl Parse for CommandAttr {
     }
 }
 
-struct Target(Ident, CommandAttr);
+struct Target(Ident, CommandAttr, Vec<Attribute>);
 
 impl Target {
     fn ident(&self) -> &Ident {
@@ -111,6 +111,10 @@ impl Target {
     fn reply(&self) -> &Ident {
         &self.1.reply
     }
+
+    fn docs(&self) -> &[Attribute] {
+        &self.2
+    }
 }
 
 fn collect_targets(items: &mut Vec<Item>) -> syn::Result<Vec<Target>> {
@@ -119,15 +123,19 @@ fn collect_targets(items: &mut Vec<Item>) -> syn::Result<Vec<Target>> {
     for item in items {
         if let Item::Struct(item) = item {
             let mut newattrs = vec![];
+            let mut command_attr = None;
             for attr in item.attrs.drain(..) {
                 if attr.path.is_ident("command") {
-                    let attr = attr.parse_args::<CommandAttr>()?;
-                    result.push(Target(item.ident.clone(), attr));
+                    command_attr = Some(attr.parse_args::<CommandAttr>()?);
                 } else {
                     newattrs.push(attr);
                 }
             }
             item.attrs = newattrs;
+            if let Some(attr) = command_attr {
+                let docs = item.attrs.iter().filter(|a| a.path.is_ident("doc")).cloned().collect::<Vec<_>>();
+                result.push(Target(item.ident.clone(), attr, docs));
+            }
         }
     }
 
@@ -135,6 +143,8 @@ fn collect_targets(items: &mut Vec<Item>) -> syn::Result<Vec<Target>> {
 }
 
 fn apply(attr: Args, item: &mut ItemMod) -> syn::Result<()> {
+    let docs = item.attrs.iter().filter(|a| a.path.is_ident("doc")).cloned().collect::<Vec<_>>();
+
     let mut contents = if let Some((_, contents)) = &mut item.content {
         contents
     } else {
@@ -172,29 +182,37 @@ fn apply(attr: Args, item: &mut ItemMod) -> syn::Result<()> {
 
     let idents = targets.iter().map(Target::ident).collect::<Vec<_>>();
     let vals = targets.iter().map(Target::val).collect::<Vec<_>>();
+    let tdocs = targets.iter().map(Target::docs).collect::<Vec<_>>();
 
     contents.push(parse_quote! {
+        /// Represents a management api command.
         pub trait #trait_: ::std::convert::Into<#name> {
+            /// Command code.
             const CODE: #codes;
+            /// Return type for this command.
             type Reply: ::btmgmt_packet_helper::pack::Unpack;
         }
     });
 
     contents.push(parse_quote! {
+        #( #docs )*
+        /// This struct internal use only.
         #[derive(Debug)]
         pub enum #name {
-            #( #idents(#idents), )*
+            #( #( #tdocs )* #idents(#idents), )*
         }
     });
 
     contents.push(parse_quote! {
         impl #name {
+            #[doc(hidden)]
             pub fn code(&self) -> #codes {
                 match self {
                     #( Self::#idents(..) => #codes::#idents, )*
                 }
             }
 
+            #[doc(hidden)]
             pub fn pack_inner<W>(&self, write: &mut W) -> ::btmgmt_packet_helper::pack::Result<()> where W: ::std::io::Write {
                 match self {
                     #( Self::#idents(inner) => inner.pack(write), )*
@@ -204,10 +222,11 @@ fn apply(attr: Args, item: &mut ItemMod) -> syn::Result<()> {
     });
 
     contents.push(parse_quote! {
+        /// Command Code
         #[derive(Debug, Clone, PartialEq, Eq, Hash, ::btmgmt_packet_helper::pack::Pack, ::btmgmt_packet_helper::pack::Unpack)]
         #[pack(u16)]
         pub enum #codes {
-            #( #idents = #vals, )*
+            #( #( #tdocs )* #idents = #vals, )*
         }
     });
 

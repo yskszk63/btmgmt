@@ -1,6 +1,7 @@
 use btmgmt_packet_helper::events;
 use btmgmt_packet_helper::pack::Unpack;
 
+/// comments.
 #[events(name = Events, codes = EventCode)]
 mod events {
     use super::*;

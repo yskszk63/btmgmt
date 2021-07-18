@@ -1,3 +1,4 @@
+//! mgmt API client.
 use std::mem::MaybeUninit;
 use std::pin::Pin;
 use std::sync::Arc;
@@ -11,12 +12,13 @@ use bytes::{Buf, BufMut, BytesMut};
 use tokio::io::{self, AsyncRead, AsyncWrite, ReadBuf};
 use tokio::sync::mpsc;
 
-use crate::pack::{self, Unpack};
-use crate::ControllerIndex;
+use crate::packet::pack::{self, Unpack};
+use crate::packet::{ErrorCode, ControllerIndex};
 use crate::event::{self, Events};
 use crate::command::{self, Commands};
 use crate::sock::MgmtSocket;
 
+/// mgmt API Client Errors.
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
     #[error(transparent)]
@@ -24,6 +26,12 @@ pub enum Error {
 
     #[error(transparent)]
     Pack(#[from] pack::Error),
+
+    #[error("error occurred {0}")]
+    Reply(ErrorCode),
+
+    #[error("unexpected: {0}")]
+    Unexpected(String),
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
@@ -255,6 +263,7 @@ impl<S> Receive<S> where S: Stream<Item = Result<(ControllerIndex, Events)>> + U
     }
 }
 
+/// mgmt API Event subscription.
 pub struct EventSubscribe {
     receive: Receive<SplitStream<EventStream<MgmtSocket>>>,
     rx: mpsc::UnboundedReceiver<(ControllerIndex, Events)>,
@@ -280,13 +289,15 @@ impl Stream for EventSubscribe {
     }
 }
 
+/// mgmt API Client.
 pub struct Client {
     rx:  Receive<SplitStream<EventStream<MgmtSocket>>>,
     tx: Arc<Mutex<SplitSink<EventStream<MgmtSocket>, (ControllerIndex, Commands)>>>,
 }
 
 impl Client {
-    pub fn new() -> Result<Self> {
+    /// Open client.
+    pub fn open() -> Result<Self> {
         let sock = MgmtSocket::new()?;
         let stream = EventStream::new(sock);
         let (tx, rx) = stream.split();
@@ -296,6 +307,7 @@ impl Client {
         })
     }
 
+    /// Subscribe mgmt API events.
     pub async fn events(&self) -> EventSubscribe {
         let rx = self.rx.subscribe().await;
         EventSubscribe {
@@ -304,6 +316,7 @@ impl Client {
         }
     }
 
+    /// Call mgmt API command.
     pub fn call<C, I>(&self, index: I, command: C) -> impl Future<Output = Result<C::Reply>> + 'static where C: command::Command + 'static, I: Into<ControllerIndex> {
         let rx = self.rx.clone();
         let tx = self.tx.clone();
@@ -315,24 +328,34 @@ impl Client {
         command: C, rx: Receive<SplitStream<EventStream<MgmtSocket>>>,
         tx: Arc<Mutex<SplitSink<EventStream<MgmtSocket>, (ControllerIndex, Commands)>>>) -> Result<C::Reply> where C: command::Command {
         let command = command.into();
+        let expected_code = command.code();
 
         let mut tx = tx.lock().await;
         tx.send((index.clone(), command)).await?;
 
         let result = rx.recv().await?.unwrap(); // TODO EOF
         if index != result.0 {
-            todo!()
+            return Err(Error::Unexpected(format!("unexpected index {:?} != {:?}", index, result.0)));
         }
         match result.1 {
             Events::CommandComplete(comp) => {
+                if comp.opcode != expected_code {
+                    return Err(Error::Unexpected(format!("unexpected code received {:?} != {:?}", expected_code, comp.opcode)));
+                }
+                if !comp.status.success() {
+                    return Err(Error::Unexpected("command complete but not success".into()));
+                }
                 let mut data = &comp.data[..];
                 let result = C::Reply::unpack(&mut data)?;
                 Ok(result)
             }
             Events::CommandStatus(status) => {
-                todo!()
+                if status.opcode != expected_code {
+                    return Err(Error::Unexpected(format!("unexpected code received {:?} != {:?}", expected_code, status.opcode)));
+                }
+                Err(Error::Reply(status.status))
             }
-            _ => todo!(),
+            _ => unreachable!(),
         }
     }
 
@@ -387,7 +410,7 @@ mod tests {
         };
 
         let i = ControllerIndex::ControllerId(0);
-        let c = command::SetPowered(true).into();
+        let c = command::SetPowered::from(true).into();
         stream.send((i, c)).await.unwrap();
     }
 }

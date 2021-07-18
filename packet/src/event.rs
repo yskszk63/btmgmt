@@ -1,8 +1,10 @@
+//! mgmt API events.
 use btmgmt_packet_helper::events;
 
 pub use imp::*;
 use super::*;
 
+/// Management API Events
 #[events(name = Events, codes = EventCode)]
 mod imp {
     use super::*;
@@ -488,6 +490,7 @@ mod imp {
 
 }
 
+#[doc(hidden)]
 pub fn unpack_events<R>(read: &mut R) -> pack::Result<(ControllerIndex, Events)> where R: io::Read {
     let code = EventCode::unpack(read)?;
     let index = ControllerIndex::unpack(read)?;

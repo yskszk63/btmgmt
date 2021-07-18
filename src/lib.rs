@@ -62,9 +62,9 @@
 //!
 //! Licensed under either of
 //! * Apache License, Version 2.0
-//!   ([LICENSE-APACHE](LICENSE-APACHE) or http://www.apache.org/licenses/LICENSE-2.0)
+//!   ([LICENSE-APACHE](LICENSE-APACHE) or <http://www.apache.org/licenses/LICENSE-2.0>)
 //! * MIT license
-//!   ([LICENSE-MIT](LICENSE-MIT) or http://opensource.org/licenses/MIT)
+//!   ([LICENSE-MIT](LICENSE-MIT) or <http://opensource.org/licenses/MIT>)
 //! at your option.
 //!
 //! ## Contribution
@@ -72,20 +72,8 @@
 //! Unless you explicitly state otherwise, any contribution intentionally submitted
 //! for inclusion in the work by you, as defined in the Apache-2.0 license, shall be
 //! dual licensed as above, without any additional terms or conditions.!
-use btmgmt_packet as packet;
-
+pub use btmgmt_packet as packet;
+pub use packet::{event, command};
 pub use client::Client;
-pub use packet::{
-    pack, command, event, Action, Address, AddressType, AdvertiseInstance, AdvertisementMonitorFeatures,
-    AdvertisementMonitorHandle, AdvertisementPattern, Advertising, AdvertisingFlag, BlockedKey,
-    ClassOfDevice, ConfirmHint, ConnectionParameter, ControllerBus, ControllerConfigurationOption,
-    ControllerIndex, ControllerType, DeviceConnectFlags, DeviceDisconnectReason, DeviceFlags,
-    Discoverable, ErrorCode, FeatureAction, FeatureFlags, IdentityResolvingKey, IoCapability,
-    LinkKey, LinkKeyType, LongTermKey, LongTermKeyType, Name, NameError, Phys,
-    Privacy, RuntimeConfigurationParameter, RuntimeConfigurationParameterType, SecureConnections,
-    Settings, ShortName, SignatureResolvingKey, SuspendState, SystemConfigurationParameter,
-    SystemConfigurationParameterType, Uuid, WakeReason,
-};
-
 mod sock;
 pub mod client;

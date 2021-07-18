@@ -12,6 +12,7 @@ use std::str::FromStr;
 use bitflags::bitflags;
 
 use btmgmt_packet_helper as helper;
+#[doc(hidden)]
 pub use helper::pack::{self, Pack, Unpack};
 use helper::helper::{Newtype, IterNewtype};
 
@@ -63,6 +64,35 @@ pub enum ErrorCode {
 impl ErrorCode {
     pub fn success(&self) -> bool {
         self == &Self::Success
+    }
+}
+
+impl fmt::Display for ErrorCode {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let m = match self {
+            Self::Success => "Success (0x00)",
+            Self::UnknownCommand => "Unknown Command (0x01)",
+            Self::NotConnected => "Not Connected (0x02)",
+            Self::Failed => "Failed (0x03)",
+            Self::ConnectFailed => "Connect Failed (0x04)",
+            Self::AuthenticationFailed => "Authentication Failed (0x05)",
+            Self::NotPaired => "Not Paired (0x06)",
+            Self::NoResources => "No Resources (0x07)",
+            Self::Timeout => "Timeout (0x08)",
+            Self::AlreadyConnected => "Already Connected (0x09)",
+            Self::Busy => "Busy (0x0A)",
+            Self::Rejected => "Rejected (0x0B)",
+            Self::NotSupported => "Not Supported (0x0C)",
+            Self::InvalidParameters => "Invalid Parameters (0x0D)",
+            Self::Disconnected => "Disconnected (0x0E)",
+            Self::NotPowered => "Not Powered (0x0F)",
+            Self::Cancelled => "Cancelled (0x10)",
+            Self::InvalidIndex => "Invalid Index (0x11)",
+            Self::RfKilled => "RFKilled (0x12)",
+            Self::AlreadyPaired => "Already Paired (0x13)",
+            Self::PermissionDenied => "Permission Denied (0x14)",
+        };
+        write!(f, "{}", m)
     }
 }
 

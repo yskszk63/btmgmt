@@ -1,5 +1,5 @@
 use proc_macro2::TokenStream;
-use syn::{Expr, Ident, Item, ItemMod, Token, parse_quote};
+use syn::{Attribute, Expr, Ident, Item, ItemMod, Token, parse_quote};
 use syn::parse::{Parse, ParseStream};
 use quote::ToTokens;
 
@@ -44,7 +44,7 @@ impl Parse for Args {
     }
 }
 
-struct Target(Ident, Expr);
+struct Target(Ident, Expr, Vec<Attribute>);
 
 impl Target {
     fn ident(&self) -> &Ident {
@@ -54,6 +54,10 @@ impl Target {
     fn val(&self) -> &Expr {
         &self.1
     }
+
+    fn docs(&self) -> &[Attribute] {
+        &self.2
+    }
 }
 
 fn collect_targets(items: &mut Vec<Item>) -> syn::Result<Vec<Target>> {
@@ -62,15 +66,19 @@ fn collect_targets(items: &mut Vec<Item>) -> syn::Result<Vec<Target>> {
     for item in items {
         if let Item::Struct(item) = item {
             let mut newattrs = vec![];
+            let mut val = None;
             for attr in item.attrs.drain(..) {
                 if attr.path.is_ident("event") {
-                    let val = attr.parse_args::<Expr>()?;
-                    result.push(Target(item.ident.clone(), val));
+                    val = Some(attr.parse_args::<Expr>()?);
                 } else {
                     newattrs.push(attr);
                 }
             }
             item.attrs = newattrs;
+            if let Some(val) = val {
+                let docs = item.attrs.iter().filter(|a| a.path.is_ident("doc")).cloned().collect::<Vec<_>>();
+                result.push(Target(item.ident.clone(), val, docs));
+            }
         }
     }
 
@@ -78,6 +86,8 @@ fn collect_targets(items: &mut Vec<Item>) -> syn::Result<Vec<Target>> {
 }
 
 fn apply(attr: Args, item: &mut ItemMod) -> syn::Result<()> {
+    let docs = item.attrs.iter().filter(|a| a.path.is_ident("doc")).cloned().collect::<Vec<_>>();
+
     let mut contents = if let Some((_, contents)) = &mut item.content {
         contents
     } else {
@@ -87,6 +97,7 @@ fn apply(attr: Args, item: &mut ItemMod) -> syn::Result<()> {
     let targets = collect_targets(&mut contents)?;
     let events = targets.iter().map(Target::ident).collect::<Vec<_>>();
     let vals = targets.iter().map(Target::val).collect::<Vec<_>>();
+    let tdocs = targets.iter().map(Target::docs).collect::<Vec<_>>();
 
     let name = &attr.name;
     let codes = &attr.codes;
@@ -108,15 +119,17 @@ fn apply(attr: Args, item: &mut ItemMod) -> syn::Result<()> {
     }
 
     contents.push(parse_quote! {
+        #( #docs )*
         #[derive(Debug, Clone)]
         pub enum #name {
-            #( #events(#events), )*
+            #( #( #tdocs )* #events(#events), )*
             Unknown(u16, Box<[u8]>),
         }
     });
 
     contents.push(parse_quote! {
         impl #name {
+            #[doc(hidden)]
             pub fn unpack_inner<R>(code: #codes, read: &mut R) -> ::btmgmt_packet_helper::pack::Result<#name> where R: ::std::io::Read {
                 Ok(match code {
                     #( #events::CODE => #name::#events(#events::unpack(read)?), )*
@@ -126,10 +139,11 @@ fn apply(attr: Args, item: &mut ItemMod) -> syn::Result<()> {
     });
 
     contents.push(parse_quote! {
+        /// Command Code
         #[derive(Debug, Clone, PartialEq, Eq, Hash, ::btmgmt_packet_helper::pack::Pack, ::btmgmt_packet_helper::pack::Unpack)]
         #[pack(u16)]
         pub enum #codes {
-            #( #events = #vals, )*
+            #( #( #tdocs )* #events = #vals, )*
         }
     });
 

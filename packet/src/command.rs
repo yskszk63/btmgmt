@@ -1,9 +1,11 @@
+//! mgmt API commands
 use btmgmt_packet_helper::commands;
 use btmgmt_packet_helper::pack::{Pack, Unpack};
 
 pub use imp::*;
 use super::*;
 
+// Management API Command
 #[commands(name = Commands, trait = Command, codes = CommandCode)]
 mod imp {
     use super::*;
@@ -1255,6 +1257,7 @@ mod imp {
 
 }
 
+#[doc(hidden)]
 pub fn pack_command<W>(index: &ControllerIndex, command: &Commands, write: &mut W) -> pack::Result<()> where W: io::Write {
     let mut buf = vec![];
     command.pack_inner(&mut buf)?;

@@ -7,7 +7,7 @@ use btmgmt::*;
 async fn main() {
     pretty_env_logger::init();
 
-    let client = Client::new().unwrap();
+    let client = Client::open().unwrap();
 
     let mut events = client.events().await;
     tokio::spawn(async move {
