@@ -1,10 +1,18 @@
 use proc_macro2::TokenStream;
-use syn::{Data, DataStruct, DeriveInput, Fields, Type, parse_quote};
+use syn::{parse_quote, Data, DataStruct, DeriveInput, Fields, Type};
 
 fn assert(item: &DeriveInput) -> syn::Result<()> {
     match &item.data {
-        Data::Struct(DataStruct {  fields: Fields::Unnamed(f), ..}) if f.unnamed.len() == 1 => {}
-        _ => return Err(syn::Error::new_spanned(item, "expect newtype. named fields, enum or union not supported.")),
+        Data::Struct(DataStruct {
+            fields: Fields::Unnamed(f),
+            ..
+        }) if f.unnamed.len() == 1 => {}
+        _ => {
+            return Err(syn::Error::new_spanned(
+                item,
+                "expect newtype. named fields, enum or union not supported.",
+            ))
+        }
     }
     Ok(())
 }
@@ -15,11 +23,12 @@ struct Conf {
 
 fn detect_conf(item: &DeriveInput) -> syn::Result<Conf> {
     match &item.data {
-        Data::Struct(DataStruct {  fields: Fields::Unnamed(f), ..}) if f.unnamed.len() == 1 => {
+        Data::Struct(DataStruct {
+            fields: Fields::Unnamed(f),
+            ..
+        }) if f.unnamed.len() == 1 => {
             let ty = f.unnamed.first().unwrap().ty.clone();
-            Ok(Conf {
-                item: ty,
-            })
+            Ok(Conf { item: ty })
         }
         _ => unreachable!(),
     }

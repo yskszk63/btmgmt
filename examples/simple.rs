@@ -26,10 +26,7 @@ async fn main() {
         .await
         .unwrap();
     dbg!(r);
-    let r = client
-        .call(None, ReadControllerIndexList)
-        .await
-        .unwrap();
+    let r = client.call(None, ReadControllerIndexList).await.unwrap();
     for index in r {
         let r = client
             .call(index.clone(), ReadControllerInformation)

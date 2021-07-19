@@ -1,12 +1,12 @@
 //! mgmt API commands
-use getset::Getters;
 use derive_new::new as New;
+use getset::Getters;
 
 use btmgmt_packet_helper::commands;
 use btmgmt_packet_helper::pack::{Pack, Unpack};
 
-pub use imp::*;
 use super::*;
+pub use imp::*;
 
 // Management API Command
 #[commands(name = Command, trait = CommandRequest, codes = CommandCode)]
@@ -21,7 +21,7 @@ mod imp {
     #[command(code = 0x0001, reply = ReadManagementVersionInformationReply)]
     pub struct ReadManagementVersionInformation;
 
-   /// Reply for [`ReadManagementVersionInformation`]
+    /// Reply for [`ReadManagementVersionInformation`]
     #[derive(Debug, Unpack, Getters)]
     #[getset(get = "pub")]
     pub struct ReadManagementVersionInformationReply {
@@ -944,7 +944,9 @@ mod imp {
 
     /// Reply for [`ReadExtendedControllerIndexList`]
     #[derive(Debug, Unpack, IterNewtype)]
-    pub struct ReadExtendedControllerIndexListReply(Vec<(ControllerIndex, super::ControllerType, super::ControllerBus)>);
+    pub struct ReadExtendedControllerIndexListReply(
+        Vec<(ControllerIndex, super::ControllerType, super::ControllerBus)>,
+    );
 
     /// Read Advertising Features Command
     ///
@@ -1165,7 +1167,9 @@ mod imp {
 
     /// Reply for [`ReadDefaultSystemConfiguration`]
     #[derive(Debug, Unpack, IterNewtype)]
-    pub struct ReadDefaultSystemConfigurationReply(super::Remaining<super::SystemConfigurationParameter>);
+    pub struct ReadDefaultSystemConfigurationReply(
+        super::Remaining<super::SystemConfigurationParameter>,
+    );
 
     /// Set Default System Configuration Command
     ///
@@ -1189,7 +1193,9 @@ mod imp {
 
     /// Reply for [`ReadDefaultRuntimeConfiguration`]
     #[derive(Debug, Unpack, IterNewtype)]
-    pub struct ReadDefaultRuntimeConfigurationReply(super::Remaining<super::RuntimeConfigurationParameter>);
+    pub struct ReadDefaultRuntimeConfigurationReply(
+        super::Remaining<super::RuntimeConfigurationParameter>,
+    );
 
     /// Read Management Version Information Command
     ///
@@ -1197,7 +1203,9 @@ mod imp {
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
     #[derive(Debug, Pack, IterNewtype)]
     #[command(code = 0x004E, reply = SetDefaultRuntimeConfigurationReply)]
-    pub struct SetDefaultRuntimeConfiguration(super::Remaining<super::RuntimeConfigurationParameter>);
+    pub struct SetDefaultRuntimeConfiguration(
+        super::Remaining<super::RuntimeConfigurationParameter>,
+    );
 
     /// Reply for [`SetDefaultRuntimeConfiguration`]
     #[derive(Debug, Unpack)]
@@ -1286,11 +1294,17 @@ mod imp {
     /// Reply for [`RemoveAdvertisementPatternsMonitor`]
     #[derive(Debug, Unpack, Newtype)]
     pub struct RemoveAdvertisementPatternsMonitorReply(super::AdvertisementMonitorHandle);
-
 }
 
 #[doc(hidden)]
-pub fn pack_command<W>(index: &ControllerIndex, command: &Command, write: &mut W) -> pack::Result<()> where W: io::Write {
+pub fn pack_command<W>(
+    index: &ControllerIndex,
+    command: &Command,
+    write: &mut W,
+) -> pack::Result<()>
+where
+    W: io::Write,
+{
     let mut buf = vec![];
     command.pack_inner(&mut buf)?;
 

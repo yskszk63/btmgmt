@@ -73,7 +73,7 @@
 //! for inclusion in the work by you, as defined in the Apache-2.0 license, shall be
 //! dual licensed as above, without any additional terms or conditions.!
 pub use btmgmt_packet as packet;
-pub use packet::{event, command};
 pub use client::Client;
-mod sock;
+pub use packet::{command, event};
 pub mod client;
+mod sock;

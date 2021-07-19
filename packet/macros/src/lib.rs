@@ -1,11 +1,11 @@
 use proc_macro::TokenStream;
 
-mod pack;
-mod unpack;
 mod commands;
 mod events;
 mod iter_newtype;
 mod newtype;
+mod pack;
+mod unpack;
 
 #[proc_macro_derive(Pack, attributes(pack))]
 pub fn pack(input: TokenStream) -> TokenStream {

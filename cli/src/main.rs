@@ -189,9 +189,7 @@ impl ControllerCommand {
 
             Self::Ls { extended } => {
                 if !extended {
-                    let reply = client
-                        .call(None, command::ReadControllerIndexList)
-                        .await?;
+                    let reply = client.call(None, command::ReadControllerIndexList).await?;
                     for c in reply {
                         println!("{}", u16::from(c));
                     }
@@ -313,7 +311,9 @@ impl ControllerCommand {
                 }
 
                 UuidCommand::Remove { val } => {
-                    let reply = client.call(index, command::RemoveUuid::new(val.clone())).await?;
+                    let reply = client
+                        .call(index, command::RemoveUuid::new(val.clone()))
+                        .await?;
                     println!("{}", &*reply);
                 }
             },
@@ -443,7 +443,8 @@ impl DiscoveryCommand {
                     addr_type.extend([packet::AddressType::BrEdr]);
                 }
                 if *le || (!bredr && !le) {
-                    addr_type.extend([packet::AddressType::LePublic, packet::AddressType::LeRandom]);
+                    addr_type
+                        .extend([packet::AddressType::LePublic, packet::AddressType::LeRandom]);
                 }
 
                 if !limited {
@@ -488,7 +489,8 @@ impl DiscoveryCommand {
                     addr_type.extend([packet::AddressType::BrEdr]);
                 }
                 if *le || (!bredr && !le) {
-                    addr_type.extend([packet::AddressType::LePublic,packet::AddressType::LeRandom]);
+                    addr_type
+                        .extend([packet::AddressType::LePublic, packet::AddressType::LeRandom]);
                 }
                 let reply = client
                     .call(index, command::StopDiscovery::new(addr_type))
@@ -632,9 +634,7 @@ impl AdvertiseCommand {
     async fn proc(&self, client: &Client, index: u16) -> anyhow::Result<()> {
         match self {
             Self::Features => {
-                let reply = client
-                    .call(index, command::ReadAdvertisingFeature)
-                    .await?;
+                let reply = client.call(index, command::ReadAdvertisingFeature).await?;
                 println!("supported flags: {:?}", reply.supported_flags());
                 println!("max adv data len: {}", reply.max_adv_data_len());
                 println!("max scan resp len: {}", reply.max_scan_resp_len());
@@ -1181,9 +1181,7 @@ impl OobCommand {
                         .await?;
                     println!("OK {:?}", reply);
                 } else {
-                    let reply = client
-                        .call(index, command::ReadLocalOutOfBandData)
-                        .await?;
+                    let reply = client.call(index, command::ReadLocalOutOfBandData).await?;
                     println!("OK {:?}", reply);
                 }
             }

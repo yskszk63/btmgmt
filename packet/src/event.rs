@@ -3,8 +3,8 @@ use getset::Getters;
 
 use btmgmt_packet_helper::events;
 
-pub use imp::*;
 use super::*;
+pub use imp::*;
 
 /// Management API Events
 #[events(name = Event, codes = EventCode)]
@@ -87,7 +87,6 @@ mod imp {
         name: super::Name,
         short_name: super::ShortName,
     }
-
 
     /// New Link Key Event
     ///
@@ -458,7 +457,9 @@ mod imp {
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
     #[derive(Debug, Clone, Unpack, IterNewtype)]
     #[event(0x0028)]
-    pub struct DefaultSystemConfigurationChanged(super::Remaining<super::SystemConfigurationParameter>);
+    pub struct DefaultSystemConfigurationChanged(
+        super::Remaining<super::SystemConfigurationParameter>,
+    );
 
     /// Default Runtime Configuration Changed Event
     ///
@@ -466,7 +467,9 @@ mod imp {
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
     #[derive(Debug, Clone, Unpack, IterNewtype)]
     #[event(0x0029)]
-    pub struct DefaultRuntimeConfigurationChanged(super::Remaining<super::RuntimeConfigurationParameter>);
+    pub struct DefaultRuntimeConfigurationChanged(
+        super::Remaining<super::RuntimeConfigurationParameter>,
+    );
 
     /// Device Flags Changed Event
     ///
@@ -518,11 +521,13 @@ mod imp {
         address: super::Address,
         address_type: super::AddressType,
     }
-
 }
 
 #[doc(hidden)]
-pub fn unpack_events<R>(read: &mut R) -> pack::Result<(ControllerIndex, Event)> where R: io::Read {
+pub fn unpack_events<R>(read: &mut R) -> pack::Result<(ControllerIndex, Event)>
+where
+    R: io::Read,
+{
     let code = EventCode::unpack(read)?;
     let index = ControllerIndex::unpack(read)?;
 

@@ -1,21 +1,21 @@
 //! mgmt API client.
+use std::future::Future;
 use std::mem::MaybeUninit;
 use std::pin::Pin;
 use std::sync::Arc;
 use std::task::{Context, Poll, Waker};
-use std::future::Future;
 
-use futures::{Sink, Stream, FutureExt, StreamExt, SinkExt};
+use bytes::{Buf, BufMut, BytesMut};
 use futures::lock::Mutex;
 use futures::stream::{SplitSink, SplitStream};
-use bytes::{Buf, BufMut, BytesMut};
+use futures::{FutureExt, Sink, SinkExt, Stream, StreamExt};
 use tokio::io::{self, AsyncRead, AsyncWrite, ReadBuf};
 use tokio::sync::mpsc;
 
-use crate::packet::pack::{self, Unpack};
-use crate::packet::{ErrorCode, ControllerIndex};
-use crate::event::{self, Event};
 use crate::command::{self, Command};
+use crate::event::{self, Event};
+use crate::packet::pack::{self, Unpack};
+use crate::packet::{ControllerIndex, ErrorCode};
 use crate::sock::MgmtSocket;
 
 /// mgmt API Client Errors.
@@ -52,11 +52,16 @@ impl<IO> EventStream<IO> {
     }
 }
 
-impl<IO> Stream for EventStream<IO> where IO: AsyncRead + Unpin {
+impl<IO> Stream for EventStream<IO>
+where
+    IO: AsyncRead + Unpin,
+{
     type Item = Result<(ControllerIndex, Event)>;
 
     fn poll_next(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Option<Self::Item>> {
-        let Self { io, ref mut rxbuf, .. } = self.get_mut();
+        let Self {
+            io, ref mut rxbuf, ..
+        } = self.get_mut();
 
         loop {
             rxbuf.reserve(1024 * 8);
@@ -72,7 +77,9 @@ impl<IO> Stream for EventStream<IO> where IO: AsyncRead + Unpin {
                 return Poll::Ready(None);
             }
             drop(b);
-            unsafe { rxbuf.advance_mut(n); }
+            unsafe {
+                rxbuf.advance_mut(n);
+            }
 
             // TODO partial read
             let mut reader = rxbuf.reader();
@@ -83,14 +90,20 @@ impl<IO> Stream for EventStream<IO> where IO: AsyncRead + Unpin {
     }
 }
 
-impl<IO> Sink<(ControllerIndex, Command)> for EventStream<IO> where IO: AsyncWrite + Unpin {
+impl<IO> Sink<(ControllerIndex, Command)> for EventStream<IO>
+where
+    IO: AsyncWrite + Unpin,
+{
     type Error = Error;
 
     fn poll_ready(self: Pin<&mut Self>, _: &mut Context<'_>) -> Poll<Result<()>> {
         Poll::Ready(Ok(()))
     }
 
-    fn start_send(self: Pin<&mut Self>, (index, commands): (ControllerIndex, Command)) -> Result<()> {
+    fn start_send(
+        self: Pin<&mut Self>,
+        (index, commands): (ControllerIndex, Command),
+    ) -> Result<()> {
         let Self { txbuf, .. } = self.get_mut();
 
         let mut write = txbuf.writer();
@@ -139,7 +152,10 @@ struct Recv<S> {
     inner: Arc<Mutex<RecvInner<S>>>,
 }
 
-impl<S> Future for Recv<S> where S: Stream<Item = Result<(ControllerIndex, Event)>> + Unpin {
+impl<S> Future for Recv<S>
+where
+    S: Stream<Item = Result<(ControllerIndex, Event)>> + Unpin,
+{
     type Output = Result<Option<(ControllerIndex, Event)>>;
 
     fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
@@ -163,7 +179,11 @@ impl<S> Future for Recv<S> where S: Stream<Item = Result<(ControllerIndex, Event
             }
 
             match result {
-                result @ Some(Ok((_, Event::CommandComplete(..) | Event::CommandStatus(..))) | Err(..)) => inner.head = result,
+                result
+                @
+                Some(
+                    Ok((_, Event::CommandComplete(..) | Event::CommandStatus(..))) | Err(..),
+                ) => inner.head = result,
                 Some(Ok(events)) => {
                     for tx in &inner.subscribers {
                         tx.send(events.clone()).ok();
@@ -182,7 +202,10 @@ struct Next<S> {
     inner: Arc<Mutex<RecvInner<S>>>,
 }
 
-impl<S> Future for Next<S> where S: Stream<Item = Result<(ControllerIndex, Event)>> + Unpin {
+impl<S> Future for Next<S>
+where
+    S: Stream<Item = Result<(ControllerIndex, Event)>> + Unpin,
+{
     type Output = Option<()>;
 
     fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
@@ -207,7 +230,11 @@ impl<S> Future for Next<S> where S: Stream<Item = Result<(ControllerIndex, Event
             }
 
             match result {
-                result @ Some(Ok((_, Event::CommandComplete(..) | Event::CommandStatus(..))) | Err(..)) => inner.head = result,
+                result
+                @
+                Some(
+                    Ok((_, Event::CommandComplete(..) | Event::CommandStatus(..))) | Err(..),
+                ) => inner.head = result,
                 Some(Ok(events)) => {
                     for tx in &inner.subscribers {
                         tx.send(events.clone()).ok();
@@ -241,7 +268,10 @@ impl<S> Receive<S> {
     }
 }
 
-impl<S> Receive<S> where S: Stream<Item = Result<(ControllerIndex, Event)>> + Unpin {
+impl<S> Receive<S>
+where
+    S: Stream<Item = Result<(ControllerIndex, Event)>> + Unpin,
+{
     fn recv(&self) -> Recv<S> {
         Recv {
             inner: self.0.clone(),
@@ -291,7 +321,7 @@ impl Stream for EventSubscribe {
 
 /// mgmt API Client.
 pub struct Client {
-    rx:  Receive<SplitStream<EventStream<MgmtSocket>>>,
+    rx: Receive<SplitStream<EventStream<MgmtSocket>>>,
     tx: Arc<Mutex<SplitSink<EventStream<MgmtSocket>, (ControllerIndex, Command)>>>,
 }
 
@@ -317,16 +347,30 @@ impl Client {
     }
 
     /// Call mgmt API command.
-    pub fn call<C, I>(&self, index: I, command: C) -> impl Future<Output = Result<C::Reply>> + 'static where C: command::CommandRequest + 'static, I: Into<ControllerIndex> {
+    pub fn call<C, I>(
+        &self,
+        index: I,
+        command: C,
+    ) -> impl Future<Output = Result<C::Reply>> + 'static
+    where
+        C: command::CommandRequest + 'static,
+        I: Into<ControllerIndex>,
+    {
         let rx = self.rx.clone();
         let tx = self.tx.clone();
 
         Self::call_inner(index.into(), command, rx, tx)
     }
 
-    async fn call_inner<C>(index: ControllerIndex,
-        command: C, rx: Receive<SplitStream<EventStream<MgmtSocket>>>,
-        tx: Arc<Mutex<SplitSink<EventStream<MgmtSocket>, (ControllerIndex, Command)>>>) -> Result<C::Reply> where C: command::CommandRequest {
+    async fn call_inner<C>(
+        index: ControllerIndex,
+        command: C,
+        rx: Receive<SplitStream<EventStream<MgmtSocket>>>,
+        tx: Arc<Mutex<SplitSink<EventStream<MgmtSocket>, (ControllerIndex, Command)>>>,
+    ) -> Result<C::Reply>
+    where
+        C: command::CommandRequest,
+    {
         let command = command.into();
         let expected_code = command.code();
 
@@ -339,12 +383,19 @@ impl Client {
 
         let result = rx.recv().await?.unwrap(); // TODO EOF
         if index != result.0 {
-            return Err(Error::Unexpected(format!("unexpected index {:?} != {:?}", index, result.0)));
+            return Err(Error::Unexpected(format!(
+                "unexpected index {:?} != {:?}",
+                index, result.0
+            )));
         }
         match result.1 {
             Event::CommandComplete(comp) => {
                 if comp.opcode() != &expected_code {
-                    return Err(Error::Unexpected(format!("unexpected code received {:?} != {:?}", expected_code, comp.opcode())));
+                    return Err(Error::Unexpected(format!(
+                        "unexpected code received {:?} != {:?}",
+                        expected_code,
+                        comp.opcode()
+                    )));
                 }
                 if !comp.status().success() {
                     return Err(Error::Unexpected("command complete but not success".into()));
@@ -355,20 +406,22 @@ impl Client {
             }
             Event::CommandStatus(status) => {
                 if status.opcode != expected_code {
-                    return Err(Error::Unexpected(format!("unexpected code received {:?} != {:?}", expected_code, status.opcode)));
+                    return Err(Error::Unexpected(format!(
+                        "unexpected code received {:?} != {:?}",
+                        expected_code, status.opcode
+                    )));
                 }
                 Err(Error::Reply(status.status))
             }
             _ => unreachable!(),
         }
     }
-
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::packet::ErrorCode;
     use crate::command::CommandCode;
+    use crate::packet::ErrorCode;
     use std::array::IntoIter;
 
     use super::*;
@@ -376,10 +429,16 @@ mod tests {
 
     #[tokio::test]
     async fn test_stream_recv() {
-        let packet = IntoIter::new([0x01u8, 0x00, 0xFF, 0xFF, 0x06, 0x00, 0x01, 0x00, 0x00, 0x01, 0x13, 0x00])
-            .chain([0x01u8, 0x00, 0xFF, 0xFF, 0x06, 0x00, 0x01, 0x00, 0x00, 0x01, 0x13, 0x00])
-            .chain([0x01u8, 0x00, 0xFF, 0xFF, 0x06, 0x00, 0x01, 0x00, 0x00, 0x01, 0x13, 0x00])
-            .collect::<Vec<_>>();
+        let packet = IntoIter::new([
+            0x01u8, 0x00, 0xFF, 0xFF, 0x06, 0x00, 0x01, 0x00, 0x00, 0x01, 0x13, 0x00,
+        ])
+        .chain([
+            0x01u8, 0x00, 0xFF, 0xFF, 0x06, 0x00, 0x01, 0x00, 0x00, 0x01, 0x13, 0x00,
+        ])
+        .chain([
+            0x01u8, 0x00, 0xFF, 0xFF, 0x06, 0x00, 0x01, 0x00, 0x00, 0x01, 0x13, 0x00,
+        ])
+        .collect::<Vec<_>>();
         let mut stream = EventStream {
             io: &packet[..],
             rxbuf: BytesMut::with_capacity(32),
@@ -391,7 +450,10 @@ mod tests {
             let (index, event) = r.unwrap();
             assert_eq!(ControllerIndex::NonController, index);
             if let Event::CommandComplete(comp) = event {
-                assert_eq!(&CommandCode::ReadManagementVersionInformation, comp.opcode());
+                assert_eq!(
+                    &CommandCode::ReadManagementVersionInformation,
+                    comp.opcode()
+                );
                 assert_eq!(&ErrorCode::Success, comp.status());
                 assert_eq!(&[0x01, 0x13, 0x00][..], comp.data().as_ref());
             } else {

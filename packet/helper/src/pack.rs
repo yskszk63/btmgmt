@@ -18,9 +18,13 @@ pub enum Error {
 pub type Result<R> = std::result::Result<R, Error>;
 
 pub trait Pack {
-    fn pack<W>(&self, write: &mut W) -> Result<()> where W: io::Write;
+    fn pack<W>(&self, write: &mut W) -> Result<()>
+    where
+        W: io::Write;
 }
 
 pub trait Unpack: Sized {
-    fn unpack<R>(read: &mut R) -> Result<Self> where R: io::Read;
+    fn unpack<R>(read: &mut R) -> Result<Self>
+    where
+        R: io::Read;
 }

@@ -1,7 +1,7 @@
 use proc_macro2::TokenStream;
-use syn::{Attribute, Expr, Ident, Item, ItemMod, Token, parse_quote};
-use syn::parse::{Parse, ParseStream};
 use quote::ToTokens;
+use syn::parse::{Parse, ParseStream};
+use syn::{parse_quote, Attribute, Expr, Ident, Item, ItemMod, Token};
 
 #[derive(Debug)]
 struct Args {
@@ -30,12 +30,10 @@ impl Parse for Args {
                     }
                     unknown => return Err(input.error(format!("unknown name {}", unknown))),
                 }
-
             } else if input.peek(Token![trait]) {
                 input.parse::<Token![trait]>()?;
                 input.parse::<Token![=]>()?;
                 trait_ = Some(input.parse::<Ident>()?);
-
             } else {
                 return Err(input.error(""));
             }
@@ -87,10 +85,7 @@ impl Parse for CommandAttr {
         }
 
         if let (Some(code), Some(reply)) = (code, reply) {
-            Ok(Self {
-                code,
-                reply,
-            })
+            Ok(Self { code, reply })
         } else {
             Err(input.error("no name or code found."))
         }
@@ -133,7 +128,12 @@ fn collect_targets(items: &mut Vec<Item>) -> syn::Result<Vec<Target>> {
             }
             item.attrs = newattrs;
             if let Some(attr) = command_attr {
-                let docs = item.attrs.iter().filter(|a| a.path.is_ident("doc")).cloned().collect::<Vec<_>>();
+                let docs = item
+                    .attrs
+                    .iter()
+                    .filter(|a| a.path.is_ident("doc"))
+                    .cloned()
+                    .collect::<Vec<_>>();
                 result.push(Target(item.ident.clone(), attr, docs));
             }
         }
@@ -143,7 +143,12 @@ fn collect_targets(items: &mut Vec<Item>) -> syn::Result<Vec<Target>> {
 }
 
 fn apply(attr: Args, item: &mut ItemMod) -> syn::Result<()> {
-    let docs = item.attrs.iter().filter(|a| a.path.is_ident("doc")).cloned().collect::<Vec<_>>();
+    let docs = item
+        .attrs
+        .iter()
+        .filter(|a| a.path.is_ident("doc"))
+        .cloned()
+        .collect::<Vec<_>>();
 
     let mut contents = if let Some((_, contents)) = &mut item.content {
         contents
@@ -157,7 +162,10 @@ fn apply(attr: Args, item: &mut ItemMod) -> syn::Result<()> {
     let targets = collect_targets(&mut contents)?;
 
     if targets.is_empty() {
-        return Err(syn::Error::new_spanned(item, "no target (`#[command(..)]`) found."));
+        return Err(syn::Error::new_spanned(
+            item,
+            "no target (`#[command(..)]`) found.",
+        ));
     }
 
     for target in &targets {

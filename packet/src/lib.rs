@@ -1,22 +1,22 @@
 #![allow(non_upper_case_globals)]
 
+use std::collections::HashSet;
 use std::convert::{TryFrom, TryInto};
+use std::ffi::{CString, NulError};
 use std::fmt;
 use std::io;
-use std::collections::HashSet;
-use std::ffi::{CString, NulError};
 use std::marker::PhantomData;
 use std::ops::{Deref, DerefMut};
 use std::str::FromStr;
 
 use bitflags::bitflags;
-use getset::Getters;
 use derive_new::new as New;
+use getset::Getters;
 
 use btmgmt_packet_helper as helper;
+use helper::helper::{IterNewtype, Newtype};
 #[doc(hidden)]
 pub use helper::pack::{self, Pack, Unpack};
-use helper::helper::{Newtype, IterNewtype};
 
 pub mod command;
 pub mod event;
@@ -33,14 +33,19 @@ impl FromStr for Address {
 }
 
 impl Pack for Address {
-    fn pack<W>(&self, write: &mut W) -> pack::Result<()> where W: io::Write {
+    fn pack<W>(&self, write: &mut W) -> pack::Result<()>
+    where
+        W: io::Write,
+    {
         <[u8; 6]>::pack(&self.0.clone().into(), write)
     }
 }
 
 impl Unpack for Address {
     fn unpack<R>(read: &mut R) -> pack::Result<Self>
-    where R: io::Read {
+    where
+        R: io::Read,
+    {
         <[u8; 6]>::unpack(read).map(|a| Self(a.into()))
     }
 }
@@ -157,14 +162,20 @@ impl From<ControllerIndex> for u16 {
 }
 
 impl Pack for ControllerIndex {
-    fn pack<W>(&self, write: &mut W) -> pack::Result<()> where W: io::Write {
+    fn pack<W>(&self, write: &mut W) -> pack::Result<()>
+    where
+        W: io::Write,
+    {
         u16::from(self.clone()).pack(write)?;
         Ok(())
     }
 }
 
 impl Unpack for ControllerIndex {
-    fn unpack<R>(read: &mut R) -> pack::Result<Self> where R: io::Read {
+    fn unpack<R>(read: &mut R) -> pack::Result<Self>
+    where
+        R: io::Read,
+    {
         u16::unpack(read).map(Into::into)
     }
 }
@@ -177,7 +188,10 @@ pub struct CommandsEvents {
 }
 
 impl Pack for CommandsEvents {
-    fn pack<W>(&self, write: &mut W) -> pack::Result<()> where W: io::Write {
+    fn pack<W>(&self, write: &mut W) -> pack::Result<()>
+    where
+        W: io::Write,
+    {
         (self.commands.len() as u16).pack(write)?;
         (self.events.len() as u16).pack(write)?;
         for item in &self.commands {
@@ -191,7 +205,10 @@ impl Pack for CommandsEvents {
 }
 
 impl Unpack for CommandsEvents {
-    fn unpack<R>(read: &mut R) -> pack::Result<Self> where R: io::Read {
+    fn unpack<R>(read: &mut R) -> pack::Result<Self>
+    where
+        R: io::Read,
+    {
         let num_commands = u16::unpack(read)?;
         let num_events = u16::unpack(read)?;
         let commands = (0..num_commands)
@@ -217,7 +234,10 @@ pub enum AddressType {
 pub struct AddressTypes(HashSet<AddressType>);
 
 impl Pack for AddressTypes {
-    fn pack<W>(&self, write: &mut W) -> pack::Result<()> where W: io::Write {
+    fn pack<W>(&self, write: &mut W) -> pack::Result<()>
+    where
+        W: io::Write,
+    {
         let mut v = 0u8;
         for item in &self.0 {
             v |= match item {
@@ -231,7 +251,10 @@ impl Pack for AddressTypes {
 }
 
 impl Unpack for AddressTypes {
-    fn unpack<R>(read: &mut R) -> pack::Result<Self> where R: io::Read {
+    fn unpack<R>(read: &mut R) -> pack::Result<Self>
+    where
+        R: io::Read,
+    {
         let v = u8::unpack(read)?;
         let mut r = HashSet::new();
 
@@ -352,14 +375,20 @@ pub enum Discoverable {
 pub struct Uuid(uuid::Uuid);
 
 impl Pack for Uuid {
-    fn pack<W>(&self, read: &mut W) -> pack::Result<()> where W: io::Write {
+    fn pack<W>(&self, read: &mut W) -> pack::Result<()>
+    where
+        W: io::Write,
+    {
         self.0.to_u128_le().pack(read)?;
         Ok(())
     }
 }
 
 impl Unpack for Uuid {
-    fn unpack<R>(read: &mut R) -> pack::Result<Self> where R: io::Read {
+    fn unpack<R>(read: &mut R) -> pack::Result<Self>
+    where
+        R: io::Read,
+    {
         Ok(Self(uuid::Uuid::from_u128_le(Unpack::unpack(read)?)))
     }
 }
@@ -508,7 +537,10 @@ bitflags! {
 pub struct VariableLengthBytes<L = u16>(Box<[u8]>, PhantomData<L>);
 
 impl Pack for VariableLengthBytes<u16> {
-    fn pack<W>(&self, write: &mut W) -> pack::Result<()> where W: io::Write {
+    fn pack<W>(&self, write: &mut W) -> pack::Result<()>
+    where
+        W: io::Write,
+    {
         (self.0.len() as u16).pack(write)?;
         self.0.pack(write)?;
         Ok(())
@@ -516,7 +548,10 @@ impl Pack for VariableLengthBytes<u16> {
 }
 
 impl Unpack for VariableLengthBytes<u16> {
-    fn unpack<R>(read: &mut R) -> pack::Result<Self> where R: io::Read {
+    fn unpack<R>(read: &mut R) -> pack::Result<Self>
+    where
+        R: io::Read,
+    {
         let len = u16::unpack(read)? as usize;
         let mut read = <&mut R as io::Read>::take(read, len as u64);
         let buf = <Box<[u8]>>::unpack(&mut read)?;
@@ -529,7 +564,10 @@ impl Unpack for VariableLengthBytes<u16> {
 }
 
 impl Pack for VariableLengthBytes<u8> {
-    fn pack<W>(&self, write: &mut W) -> pack::Result<()> where W: io::Write {
+    fn pack<W>(&self, write: &mut W) -> pack::Result<()>
+    where
+        W: io::Write,
+    {
         (self.0.len() as u8).pack(write)?;
         self.0.pack(write)?;
         Ok(())
@@ -537,7 +575,10 @@ impl Pack for VariableLengthBytes<u8> {
 }
 
 impl Unpack for VariableLengthBytes<u8> {
-    fn unpack<R>(read: &mut R) -> pack::Result<Self> where R: io::Read {
+    fn unpack<R>(read: &mut R) -> pack::Result<Self>
+    where
+        R: io::Read,
+    {
         let len = u8::unpack(read)? as usize;
         let mut read = <&mut R as io::Read>::take(read, len as u64);
         let buf = <Box<[u8]>>::unpack(&mut read)?;
@@ -640,7 +681,10 @@ pub struct AdvertiseInstance(u8);
 pub struct AdvertiseInstances(Vec<AdvertiseInstance>);
 
 impl Pack for AdvertiseInstances {
-    fn pack<W>(&self, write: &mut W) -> pack::Result<()> where W: io::Write {
+    fn pack<W>(&self, write: &mut W) -> pack::Result<()>
+    where
+        W: io::Write,
+    {
         (self.0.len() as u8).pack(write)?;
         for item in &self.0 {
             item.pack(write)?;
@@ -650,7 +694,10 @@ impl Pack for AdvertiseInstances {
 }
 
 impl Unpack for AdvertiseInstances {
-    fn unpack<R>(read: &mut R) -> pack::Result<Self> where R: io::Read {
+    fn unpack<R>(read: &mut R) -> pack::Result<Self>
+    where
+        R: io::Read,
+    {
         let len = u8::unpack(read)? as usize;
         let v = (0..len)
             .map(|_| Unpack::unpack(read))
@@ -671,7 +718,11 @@ impl<'a> std::iter::IntoIterator for &'a AdvertiseInstances {
 pub struct AdvDataScanResp(Box<[u8]>, Box<[u8]>);
 
 impl AdvDataScanResp {
-    pub fn new<A, S>(advdata: A, scanresp: S) -> Self where A: AsRef<[u8]>, S: AsRef<[u8]> {
+    pub fn new<A, S>(advdata: A, scanresp: S) -> Self
+    where
+        A: AsRef<[u8]>,
+        S: AsRef<[u8]>,
+    {
         let advdata = advdata.as_ref();
         let scanresp = scanresp.as_ref();
         Self(advdata.into(), scanresp.into())
@@ -679,7 +730,10 @@ impl AdvDataScanResp {
 }
 
 impl Pack for AdvDataScanResp {
-    fn pack<W>(&self, write: &mut W) -> pack::Result<()> where W: io::Write {
+    fn pack<W>(&self, write: &mut W) -> pack::Result<()>
+    where
+        W: io::Write,
+    {
         (self.0.len() as u8).pack(write)?;
         (self.1.len() as u8).pack(write)?;
         self.0.pack(write)?;
@@ -689,7 +743,10 @@ impl Pack for AdvDataScanResp {
 }
 
 impl Unpack for AdvDataScanResp {
-    fn unpack<R>(read: &mut R) -> pack::Result<Self> where R: io::Read {
+    fn unpack<R>(read: &mut R) -> pack::Result<Self>
+    where
+        R: io::Read,
+    {
         let adv_data_len = u8::unpack(read)? as usize;
         let scan_resp_len = u8::unpack(read)? as usize;
 
@@ -880,7 +937,10 @@ impl<T> Pack for Remaining<T>
 where
     T: Pack,
 {
-    fn pack<W>(&self, write: &mut W) -> pack::Result<()> where W: io::Write {
+    fn pack<W>(&self, write: &mut W) -> pack::Result<()>
+    where
+        W: io::Write,
+    {
         for item in &self.0 {
             item.pack(write)?;
         }
@@ -892,7 +952,10 @@ impl<T> Unpack for Remaining<T>
 where
     T: Unpack,
 {
-    fn unpack<R>(read: &mut R) -> pack::Result<Self> where R: io::Read {
+    fn unpack<R>(read: &mut R) -> pack::Result<Self>
+    where
+        R: io::Read,
+    {
         let mut v = vec![];
         loop {
             match Unpack::unpack(read) {
@@ -931,7 +994,10 @@ pub struct AdvertisementPattern {
 }
 
 impl AdvertisementPattern {
-    pub fn new<V>(ad_type: u8, offset: u8, value: V) -> Self where V: AsRef<[u8]> {
+    pub fn new<V>(ad_type: u8, offset: u8, value: V) -> Self
+    where
+        V: AsRef<[u8]>,
+    {
         let v = value.as_ref();
         let length = v.len() as u8;
 

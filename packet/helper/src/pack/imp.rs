@@ -225,14 +225,20 @@ where
 }
 
 impl Pack for Box<[u8]> {
-    fn pack<W>(&self, write: &mut W) -> Result<()> where W: io::Write {
+    fn pack<W>(&self, write: &mut W) -> Result<()>
+    where
+        W: io::Write,
+    {
         write.write_all(self)?;
         Ok(())
     }
 }
 
 impl Unpack for Box<[u8]> {
-    fn unpack<R>(read: &mut R) -> Result<Self> where R: io::Read {
+    fn unpack<R>(read: &mut R) -> Result<Self>
+    where
+        R: io::Read,
+    {
         let mut b = vec![];
         read.read_to_end(&mut b)?;
         Ok(Box::from(&b[..]))
@@ -260,9 +266,15 @@ impl<const N: usize> Unpack for [u8; N] {
     }
 }
 
-impl<P1, P2> Pack for (P1, P2) where P1: Pack, P2: Pack {
+impl<P1, P2> Pack for (P1, P2)
+where
+    P1: Pack,
+    P2: Pack,
+{
     fn pack<W>(&self, write: &mut W) -> Result<()>
-    where W: io::Write {
+    where
+        W: io::Write,
+    {
         let (p1, p2) = self;
         p1.pack(write)?;
         p2.pack(write)?;
@@ -270,19 +282,29 @@ impl<P1, P2> Pack for (P1, P2) where P1: Pack, P2: Pack {
     }
 }
 
-impl<P1, P2> Unpack for (P1, P2) where P1: Unpack, P2: Unpack {
+impl<P1, P2> Unpack for (P1, P2)
+where
+    P1: Unpack,
+    P2: Unpack,
+{
     fn unpack<R>(read: &mut R) -> Result<Self>
-    where R: io::Read {
-        Ok((
-            P1::unpack(read)?,
-            P2::unpack(read)?,
-        ))
+    where
+        R: io::Read,
+    {
+        Ok((P1::unpack(read)?, P2::unpack(read)?))
     }
 }
 
-impl<P1, P2, P3> Pack for (P1, P2, P3) where P1: Pack, P2: Pack, P3: Pack {
+impl<P1, P2, P3> Pack for (P1, P2, P3)
+where
+    P1: Pack,
+    P2: Pack,
+    P3: Pack,
+{
     fn pack<W>(&self, write: &mut W) -> Result<()>
-    where W: io::Write {
+    where
+        W: io::Write,
+    {
         let (p1, p2, p3) = self;
         p1.pack(write)?;
         p2.pack(write)?;
@@ -291,14 +313,17 @@ impl<P1, P2, P3> Pack for (P1, P2, P3) where P1: Pack, P2: Pack, P3: Pack {
     }
 }
 
-impl<P1, P2, P3> Unpack for (P1, P2, P3) where P1: Unpack, P2: Unpack, P3: Unpack {
+impl<P1, P2, P3> Unpack for (P1, P2, P3)
+where
+    P1: Unpack,
+    P2: Unpack,
+    P3: Unpack,
+{
     fn unpack<R>(read: &mut R) -> Result<Self>
-    where R: io::Read {
-        Ok((
-            P1::unpack(read)?,
-            P2::unpack(read)?,
-            P3::unpack(read)?,
-        ))
+    where
+        R: io::Read,
+    {
+        Ok((P1::unpack(read)?, P2::unpack(read)?, P3::unpack(read)?))
     }
 }
 
@@ -319,10 +344,7 @@ mod tests {
 
     #[test]
     fn test_bool() {
-        let tests = [
-            (true, &[1]),
-            (false, &[0]),
-        ];
+        let tests = [(true, &[1]), (false, &[0])];
 
         for (test, buf) in tests {
             let mut b = vec![];
@@ -336,9 +358,7 @@ mod tests {
 
     #[test]
     fn test_u16() {
-        let tests = [
-            (0x00FF, &[0xFF, 0x00]),
-        ];
+        let tests = [(0x00FF, &[0xFF, 0x00])];
 
         for (test, buf) in tests {
             let mut b = vec![];
@@ -352,9 +372,7 @@ mod tests {
 
     #[test]
     fn test_u32() {
-        let tests = [
-            (0x00FFFFFF, &[0xFF, 0xFF, 0xFF, 0x00]),
-        ];
+        let tests = [(0x00FFFFFF, &[0xFF, 0xFF, 0xFF, 0x00])];
 
         for (test, buf) in tests {
             let mut b = vec![];
@@ -368,9 +386,13 @@ mod tests {
 
     #[test]
     fn test_u128() {
-        let tests = [
-            (0x00FFFFFFFFFFFFFFFFFFFFFFFFFFFFFF, &[0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00]),
-        ];
+        let tests = [(
+            0x00FFFFFFFFFFFFFFFFFFFFFFFFFFFFFF,
+            &[
+                0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+                0xFF, 0x00,
+            ],
+        )];
 
         for (test, buf) in tests {
             let mut b = vec![];
@@ -384,10 +406,7 @@ mod tests {
 
     #[test]
     fn test_opt() {
-        let tests = [
-            (Some(1u8), &[1][..]),
-            (None, &[][..]),
-        ];
+        let tests = [(Some(1u8), &[1][..]), (None, &[][..])];
 
         for (test, buf) in tests {
             let mut b = vec![];
@@ -401,9 +420,7 @@ mod tests {
 
     #[test]
     fn test_box() {
-        let tests = [
-            (Box::new(1u8), &[1][..]),
-        ];
+        let tests = [(Box::new(1u8), &[1][..])];
 
         for (test, buf) in tests {
             let mut b = vec![];
@@ -417,9 +434,7 @@ mod tests {
 
     #[test]
     fn test_vec() {
-        let tests = [
-            (vec![2, 5], &[0x02, 0x00, 0x02, 0x05][..]),
-        ];
+        let tests = [(vec![2, 5], &[0x02, 0x00, 0x02, 0x05][..])];
 
         for (test, buf) in tests {
             let mut b = vec![];
@@ -433,9 +448,7 @@ mod tests {
 
     #[test]
     fn test_box_slice() {
-        let tests = [
-            (Box::<[u8]>::from(&[2, 5][..]), &[0x02, 0x05][..]),
-        ];
+        let tests = [(Box::<[u8]>::from(&[2, 5][..]), &[0x02, 0x05][..])];
 
         for (test, buf) in tests {
             let mut b = vec![];
@@ -449,9 +462,7 @@ mod tests {
 
     #[test]
     fn test_tuple2() {
-        let tests = [
-            ((true, 2u8), &[0x01, 0x02][..]),
-        ];
+        let tests = [((true, 2u8), &[0x01, 0x02][..])];
 
         for (test, buf) in tests {
             let mut b = vec![];
@@ -465,9 +476,7 @@ mod tests {
 
     #[test]
     fn test_tuple3() {
-        let tests = [
-            ((true, 2u8, 3u8), &[0x01, 0x02, 0x03][..]),
-        ];
+        let tests = [((true, 2u8, 3u8), &[0x01, 0x02, 0x03][..])];
 
         for (test, buf) in tests {
             let mut b = vec![];
@@ -483,7 +492,7 @@ mod tests {
     fn test_unexpected_eof() {
         let b = vec![0x01];
         let r = <[u8; 2]>::unpack(&mut &b[..]);
-        assert!(matches!(r, Err(Error::Io(io::Error {..} ))))
+        assert!(matches!(r, Err(Error::Io(io::Error { .. }))))
     }
 
     #[test]
