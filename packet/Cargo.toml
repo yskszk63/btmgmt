@@ -1,0 +1,19 @@
+[package]
+name = "btmgmt-packet"
+version = "0.2.0"
+authors = ["yskszk63 <yskszk63@gmail.com>"]
+edition = "2018"
+description = "btmgmt API packet structures."
+repository = "https://github.com/yskszk63/btmgmt"
+license = "MIT OR Apache-2.0"
+keywords = ["bluetooth"]
+
+[dependencies]
+bdaddr = "0.1"
+thiserror = "1.0"
+btmgmt-packet-helper = { path = "helper", version = "0.2.0" }
+bitflags = "1.2"
+uuid = "0.8"
+getset = "0.1"
+derive-new = "0.5"
+derive_builder = "0.10"
