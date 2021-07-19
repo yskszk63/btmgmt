@@ -18,9 +18,10 @@ fn derive_unit(item: &DeriveInput, _: &DataStruct) -> syn::Result<TokenStream> {
 fn derive_tuple(item: &DeriveInput, data: &DataStruct) -> syn::Result<TokenStream> {
     let ident = &item.ident;
     let fields = (0..data.fields.len()).map(proc_macro2::Literal::usize_unsuffixed).collect::<Vec<_>>();
+    let (impl_generics, type_generics, where_clause) = item.generics.split_for_impl();
 
     let code = quote! {
-        impl ::btmgmt_packet_helper::pack::Pack for #ident {
+        impl #impl_generics ::btmgmt_packet_helper::pack::Pack for #ident #type_generics #where_clause {
             fn pack<W>(&self, write: &mut W) -> ::btmgmt_packet_helper::pack::Result<()> where W: ::std::io::Write {
                 #( self.#fields.pack(write)?; )*
                 Ok(())
@@ -33,9 +34,10 @@ fn derive_tuple(item: &DeriveInput, data: &DataStruct) -> syn::Result<TokenStrea
 fn derive_standard(item: &DeriveInput, data: &DataStruct) -> syn::Result<TokenStream> {
     let ident = &item.ident;
     let fields = data.fields.iter().map(|f| f.ident.as_ref().unwrap()).collect::<Vec<_>>();
+    let (impl_generics, type_generics, where_clause) = item.generics.split_for_impl();
 
     let code = quote! {
-        impl ::btmgmt_packet_helper::pack::Pack for #ident {
+        impl #impl_generics ::btmgmt_packet_helper::pack::Pack for #ident #type_generics #where_clause {
             fn pack<W>(&self, write: &mut W) -> ::btmgmt_packet_helper::pack::Result<()> where W: ::std::io::Write {
                 #( self.#fields.pack(write)?; )*
                 Ok(())

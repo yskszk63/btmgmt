@@ -301,19 +301,17 @@ pub enum NameError {
 }
 
 #[derive(Clone, Pack, Unpack)]
-pub struct Name(Box<[u8; Self::LEN]>);
+pub struct FixedLengthName<const N: usize>(Box<[u8; N]>);
 
-impl Name {
-    const LEN: usize = 249;
-
+impl<const N: usize> FixedLengthName<N> {
     pub fn new<T: Into<Vec<u8>>>(t: T) -> Result<Self, NameError> {
         let s = CString::new(t)?;
         let b = s.as_bytes_with_nul();
-        if b.len() > Self::LEN {
-            return Err(LengthTooLong(Self::LEN, b.len()).into());
+        if b.len() > N {
+            return Err(LengthTooLong(N, b.len()).into());
         }
 
-        let mut v = [0; Self::LEN];
+        let mut v = [0; N];
         (&mut v[..b.len()]).copy_from_slice(b);
         Ok(Self(Box::new(v)))
     }
@@ -324,57 +322,22 @@ impl Name {
     }
 }
 
-impl fmt::Debug for Name {
+impl<const N: usize> fmt::Debug for FixedLengthName<N> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let b = self.0.split(|b| b == &0).next().unwrap_or(b"");
         CString::new(b).unwrap().fmt(f)
     }
 }
 
-impl FromStr for Name {
+impl<const N: usize> FromStr for FixedLengthName<N> {
     type Err = NameError;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Self::new(s)
     }
 }
 
-#[derive(Clone, Pack, Unpack)]
-pub struct ShortName([u8; Self::LEN]);
-
-impl ShortName {
-    const LEN: usize = 11;
-
-    pub fn new<T: Into<Vec<u8>>>(t: T) -> Result<Self, NameError> {
-        let s = CString::new(t)?;
-        let b = s.as_bytes_with_nul();
-        if b.len() > Self::LEN {
-            return Err(LengthTooLong(Self::LEN, b.len()).into());
-        }
-
-        let mut v = [0; Self::LEN];
-        (&mut v[..b.len()]).copy_from_slice(b);
-        Ok(Self(v))
-    }
-
-    pub fn to_string_lossy(&self) -> String {
-        let b = self.0.split(|b| b == &0).next().unwrap_or(b"");
-        CString::new(b).unwrap().to_string_lossy().to_string()
-    }
-}
-
-impl fmt::Debug for ShortName {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let b = self.0.split(|b| b == &0).next().unwrap_or(b"");
-        CString::new(b).unwrap().fmt(f)
-    }
-}
-
-impl FromStr for ShortName {
-    type Err = NameError;
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Self::new(s)
-    }
-}
+pub type Name = FixedLengthName<249>;
+pub type ShortName = FixedLengthName<11>;
 
 #[derive(Debug, Pack, Unpack)]
 #[pack(u8)]
