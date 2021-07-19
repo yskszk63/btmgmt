@@ -45,7 +45,7 @@ fn mgmt_create() -> io::Result<Socket> {
 
     let (_, addr) = unsafe {
         SockAddr::init(move |addr, len| {
-            let addr = mem::transmute::<_, &mut sockaddr_hci>(addr);
+            let addr = &mut *(addr as *mut sockaddr_hci);
             *addr = sockaddr_hci {
                 hci_family: libc::AF_BLUETOOTH as sa_family_t,
                 hci_dev: HCI_DEV_NONE,

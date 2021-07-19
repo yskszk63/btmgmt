@@ -63,30 +63,28 @@ where
             io, ref mut rxbuf, ..
         } = self.get_mut();
 
-        loop {
-            rxbuf.reserve(1024 * 8);
+        rxbuf.reserve(1024 * 8);
 
-            let dst = rxbuf.chunk_mut();
-            let dst = unsafe { &mut *(dst as *mut _ as *mut [MaybeUninit<u8>]) };
-            let mut b = ReadBuf::uninit(dst);
-            if Poll::Pending == Pin::new(io).poll_read(cx, &mut b)? {
-                return Poll::Pending;
-            };
-            let n = b.filled().len();
-            if n == 0 && !rxbuf.has_remaining() {
-                return Poll::Ready(None);
-            }
-            drop(b);
-            unsafe {
-                rxbuf.advance_mut(n);
-            }
-
-            // TODO partial read
-            let mut reader = rxbuf.reader();
-            let (index, event) = event::unpack_events(&mut reader)?;
-            *rxbuf = BytesMut::from(rxbuf.as_ref());
-            return Poll::Ready(Some(Ok((index, event))));
+        let dst = rxbuf.chunk_mut();
+        let dst = unsafe { &mut *(dst as *mut _ as *mut [MaybeUninit<u8>]) };
+        let mut b = ReadBuf::uninit(dst);
+        if Poll::Pending == Pin::new(io).poll_read(cx, &mut b)? {
+            return Poll::Pending;
+        };
+        let n = b.filled().len();
+        if n == 0 && !rxbuf.has_remaining() {
+            return Poll::Ready(None);
         }
+        drop(b);
+        unsafe {
+            rxbuf.advance_mut(n);
+        }
+
+        // TODO partial read
+        let mut reader = rxbuf.reader();
+        let (index, event) = event::unpack_events(&mut reader)?;
+        *rxbuf = BytesMut::from(rxbuf.as_ref());
+        Poll::Ready(Some(Ok((index, event))))
     }
 }
 
@@ -122,7 +120,7 @@ where
                 };
                 this.txbuf.advance(n);
             } else {
-                if let Poll::Pending = Pin::new(&mut this.io).poll_flush(cx) {
+                if Pin::new(&mut this.io).poll_flush(cx).is_pending() {
                     return Poll::Pending;
                 }
                 return Poll::Ready(Ok(()));
@@ -133,7 +131,7 @@ where
     fn poll_close(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Result<()>> {
         let Self { io, .. } = self.get_mut();
 
-        if let Poll::Pending = Pin::new(io).poll_shutdown(cx)? {
+        if Pin::new(io).poll_shutdown(cx)?.is_pending() {
             return Poll::Pending;
         }
 
@@ -319,10 +317,12 @@ impl Stream for EventSubscribe {
     }
 }
 
+type ClientTx = Arc<Mutex<SplitSink<EventStream<MgmtSocket>, (ControllerIndex, Command)>>>;
+
 /// mgmt API Client.
 pub struct Client {
     rx: Receive<SplitStream<EventStream<MgmtSocket>>>,
-    tx: Arc<Mutex<SplitSink<EventStream<MgmtSocket>, (ControllerIndex, Command)>>>,
+    tx: ClientTx,
 }
 
 impl Client {
@@ -366,7 +366,7 @@ impl Client {
         index: ControllerIndex,
         command: C,
         rx: Receive<SplitStream<EventStream<MgmtSocket>>>,
-        tx: Arc<Mutex<SplitSink<EventStream<MgmtSocket>, (ControllerIndex, Command)>>>,
+        tx: ClientTx,
     ) -> Result<C::Reply>
     where
         C: command::CommandRequest,
@@ -378,7 +378,7 @@ impl Client {
         match tx.send((index.clone(), command)).await {
             Ok(..) => {}
             Err(Error::Io(err)) if err.kind() == io::ErrorKind::WriteZero => {} // Will probably receive an error reply
-            Err(err) => return Err(err.into()),
+            Err(err) => return Err(err),
         }
 
         let result = rx.recv().await?.unwrap(); // TODO EOF

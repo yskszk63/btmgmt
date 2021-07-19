@@ -12,6 +12,7 @@ use std::str::FromStr;
 use bitflags::bitflags;
 use derive_new::new as New;
 use getset::Getters;
+use derive_builder::Builder;
 
 use btmgmt_packet_helper as helper;
 use helper::helper::{IterNewtype, Newtype};
@@ -435,7 +436,7 @@ pub enum LongTermKeyType {
     DebugKeyP256 = 0x04,
 }
 
-#[derive(Debug, Clone, Pack, Unpack, Getters, New)]
+#[derive(Debug, Clone, Pack, Unpack, Getters, Builder)]
 #[getset(get = "pub")]
 pub struct LongTermKey {
     address: Address,
@@ -1002,7 +1003,7 @@ impl AdvertisementPattern {
         let length = v.len() as u8;
 
         let mut value = [0; 31];
-        &mut value[0..v.len()].copy_from_slice(v);
+        value[0..v.len()].copy_from_slice(v);
         Self {
             ad_type,
             offset,
