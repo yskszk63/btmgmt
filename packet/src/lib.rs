@@ -1,4 +1,23 @@
+#![doc(html_root_url = "https://docs.rs/btmgmt-packet/0.2.0")]
 #![allow(non_upper_case_globals)]
+//! Linux bluetooth mgmt API packet structures.
+//!
+//! see [bluez docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
+//!
+//! ## License
+//!
+//! Licensed under either of
+//! * Apache License, Version 2.0
+//!   ([LICENSE-APACHE](LICENSE-APACHE) or <http://www.apache.org/licenses/LICENSE-2.0>)
+//! * MIT license
+//!   ([LICENSE-MIT](LICENSE-MIT) or <http://opensource.org/licenses/MIT>)
+//! at your option.
+//!
+//! ## Contribution
+//!
+//! Unless you explicitly state otherwise, any contribution intentionally submitted
+//! for inclusion in the work by you, as defined in the Apache-2.0 license, shall be
+//! dual licensed as above, without any additional terms or conditions.!
 
 use std::collections::HashSet;
 use std::convert::{TryFrom, TryInto};
@@ -10,9 +29,9 @@ use std::ops::{Deref, DerefMut};
 use std::str::FromStr;
 
 use bitflags::bitflags;
+use derive_builder::Builder;
 use derive_new::new as New;
 use getset::Getters;
-use derive_builder::Builder;
 
 use btmgmt_packet_helper as helper;
 use helper::helper::{IterNewtype, Newtype};

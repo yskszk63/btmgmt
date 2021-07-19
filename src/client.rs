@@ -6,11 +6,11 @@ use std::sync::Arc;
 use std::task::{Context, Poll, Waker};
 
 use bytes::{Buf, BufMut, BytesMut};
+use futures::channel::mpsc;
 use futures::lock::Mutex;
 use futures::stream::{SplitSink, SplitStream};
 use futures::{FutureExt, Sink, SinkExt, Stream, StreamExt};
 use tokio::io::{self, AsyncRead, AsyncWrite, ReadBuf};
-use tokio::sync::mpsc;
 
 use crate::command::{self, Command};
 use crate::event::{self, Event};
@@ -184,7 +184,7 @@ where
                 ) => inner.head = result,
                 Some(Ok(events)) => {
                     for tx in &inner.subscribers {
-                        tx.send(events.clone()).ok();
+                        tx.unbounded_send(events.clone()).ok();
                     }
                 }
                 None => {
@@ -235,7 +235,7 @@ where
                 ) => inner.head = result,
                 Some(Ok(events)) => {
                     for tx in &inner.subscribers {
-                        tx.send(events.clone()).ok();
+                        tx.unbounded_send(events.clone()).ok();
                     }
                 }
                 None => {
@@ -283,7 +283,7 @@ where
     }
 
     async fn subscribe(&self) -> mpsc::UnboundedReceiver<(ControllerIndex, Event)> {
-        let (tx, rx) = mpsc::unbounded_channel();
+        let (tx, rx) = mpsc::unbounded();
 
         let mut inner = self.0.lock().await;
         inner.subscribers.push(tx);
@@ -304,7 +304,7 @@ impl Stream for EventSubscribe {
         let Self { receive, rx } = self.get_mut();
 
         loop {
-            match rx.poll_recv(cx) {
+            match rx.poll_next_unpin(cx) {
                 Poll::Ready(result) => return Poll::Ready(result),
                 Poll::Pending => {}
             }

@@ -1,10 +1,12 @@
 [package]
 name = "btmgmt-packet-macros"
-version = "0.1.0"
+version = "0.2.0"
+authors = ["yskszk63 <yskszk63@gmail.com>"]
 edition = "2018"
-autotests = false
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+description = "btmgmt-packet helper macros."
+repository = "https://github.com/yskszk63/btmgmt"
+license = "MIT OR Apache-2.0"
+keywords = ["bluetooth"]
 
 [lib]
 proc-macro = true
