@@ -15,13 +15,12 @@
 //! ```no_run
 //! use btmgmt::Client;
 //! use btmgmt::command::ReadManagementSupportedCommands;
-//! use tokio_stream::StreamExt;
+//! use futures::StreamExt;
 //!
 //! #[tokio::main(flavor = "current_thread")]
 //! async fn main() {
 //!     // (management client, run loop handle)
-//!     let (client, handle) = Client::open().unwrap();
-//!     let handle = tokio::spawn(handle);
+//!     let client = Client::open().unwrap();
 //!
 //!     let mut events = client.events().await;
 //!     tokio::spawn(async move {
@@ -33,16 +32,13 @@
 //!         }
 //!     });
 //!
-//!     let reply = client.call(None, ReadManagementSupportedCommands::new()).await.unwrap();
+//!     let reply = client.call(None, ReadManagementSupportedCommands).await.unwrap();
 //!     for command in reply.commands() {
 //!         // do stuff
 //!     }
 //!     for event in reply.events() {
 //!         // do stuff
 //!     }
-//!
-//!     drop(client); // may be run loop exit.
-//!     handle.await.unwrap();
 //! }
 //! ```
 //!
