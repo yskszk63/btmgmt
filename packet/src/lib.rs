@@ -10,6 +10,7 @@ use std::ops::{Deref, DerefMut};
 use std::str::FromStr;
 
 use bitflags::bitflags;
+use getset::Getters;
 
 use btmgmt_packet_helper as helper;
 #[doc(hidden)]
@@ -22,6 +23,14 @@ pub mod event;
 #[derive(Debug, Clone, Newtype)]
 pub struct Address(bdaddr::Address);
 
+impl FromStr for Address {
+    type Err = <bdaddr::Address as FromStr>::Err;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(Self(FromStr::from_str(s)?))
+    }
+}
+
 impl Pack for Address {
     fn pack<W>(&self, write: &mut W) -> pack::Result<()> where W: io::Write {
         <[u8; 6]>::pack(&self.0.clone().into(), write)
@@ -32,6 +41,12 @@ impl Unpack for Address {
     fn unpack<R>(read: &mut R) -> pack::Result<Self>
     where R: io::Read {
         <[u8; 6]>::unpack(read).map(|a| Self(a.into()))
+    }
+}
+
+impl fmt::Display for Address {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.0.fmt(f)
     }
 }
 
@@ -153,10 +168,11 @@ impl Unpack for ControllerIndex {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Getters)]
+#[getset(get = "pub")]
 pub struct CommandsEvents {
-    pub commands: Vec<command::CommandCode>,
-    pub events: Vec<event::EventCode>,
+    commands: Vec<command::CommandCode>,
+    events: Vec<event::EventCode>,
 }
 
 impl Pack for CommandsEvents {
@@ -195,7 +211,7 @@ pub enum AddressType {
     LeRandom = 2,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, IterNewtype)]
+#[derive(Debug, Clone, PartialEq, Eq, Default, IterNewtype)]
 #[iter_newtype(item = AddressType, into_iter = ::std::collections::hash_set::IntoIter<AddressType>, no_iter_mut)]
 pub struct AddressTypes(HashSet<AddressType>);
 
@@ -368,7 +384,7 @@ pub enum Discoverable {
     Limited = 0x02,
 }
 
-#[derive(Debug, Clone, Newtype)]
+#[derive(Debug, Clone, Default, Newtype)]
 pub struct Uuid(uuid::Uuid);
 
 impl Pack for Uuid {
@@ -381,6 +397,14 @@ impl Pack for Uuid {
 impl Unpack for Uuid {
     fn unpack<R>(read: &mut R) -> pack::Result<Self> where R: io::Read {
         Ok(Self(uuid::Uuid::from_u128_le(Unpack::unpack(read)?)))
+    }
+}
+
+impl FromStr for Uuid {
+    type Err = <uuid::Uuid as FromStr>::Err;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(Self(FromStr::from_str(s)?))
     }
 }
 
@@ -684,6 +708,14 @@ impl<'a> std::iter::IntoIterator for &'a AdvertiseInstances {
 #[derive(Debug)]
 pub struct AdvDataScanResp(Box<[u8]>, Box<[u8]>);
 
+impl AdvDataScanResp {
+    pub fn new<A, S>(advdata: A, scanresp: S) -> Self where A: AsRef<[u8]>, S: AsRef<[u8]> {
+        let advdata = advdata.as_ref();
+        let scanresp = scanresp.as_ref();
+        Self(advdata.into(), scanresp.into())
+    }
+}
+
 impl Pack for AdvDataScanResp {
     fn pack<W>(&self, write: &mut W) -> pack::Result<()> where W: io::Write {
         (self.0.len() as u8).pack(write)?;
@@ -932,12 +964,29 @@ impl From<u16> for AdvertisementMonitorHandle {
     }
 }
 
-#[derive(Debug, Pack, Unpack)]
+#[derive(Debug, Pack, Unpack, Getters)]
+#[getset(get = "pub")]
 pub struct AdvertisementPattern {
-    pub ad_type: u8,
-    pub offset: u8,
-    pub length: u8,
-    pub value: [u8; 31],
+    ad_type: u8,
+    offset: u8,
+    length: u8,
+    value: [u8; 31],
+}
+
+impl AdvertisementPattern {
+    pub fn new<V>(ad_type: u8, offset: u8, value: V) -> Self where V: AsRef<[u8]> {
+        let v = value.as_ref();
+        let length = v.len() as u8;
+
+        let mut value = [0; 31];
+        &mut value[0..v.len()].copy_from_slice(v);
+        Self {
+            ad_type,
+            offset,
+            length,
+            value,
+        }
+    }
 }
 
 bitflags! {

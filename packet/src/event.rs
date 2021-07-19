@@ -1,11 +1,13 @@
 //! mgmt API events.
+use getset::Getters;
+
 use btmgmt_packet_helper::events;
 
 pub use imp::*;
 use super::*;
 
 /// Management API Events
-#[events(name = Events, codes = EventCode)]
+#[events(name = Event, codes = EventCode)]
 mod imp {
     use super::*;
 
@@ -209,11 +211,12 @@ mod imp {
     ///
     /// see [bluez
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
-    #[derive(Debug, Clone, Unpack)]
+    #[derive(Debug, Clone, Unpack, Getters)]
     #[event(0x0013)]
+    #[getset(get = "pub")]
     pub struct Discovering {
-        pub address_type: super::AddressTypes,
-        pub discovering: bool,
+        address_type: super::AddressTypes,
+        discovering: bool,
     }
 
     /// Device Blocked Event
@@ -491,12 +494,12 @@ mod imp {
 }
 
 #[doc(hidden)]
-pub fn unpack_events<R>(read: &mut R) -> pack::Result<(ControllerIndex, Events)> where R: io::Read {
+pub fn unpack_events<R>(read: &mut R) -> pack::Result<(ControllerIndex, Event)> where R: io::Read {
     let code = EventCode::unpack(read)?;
     let index = ControllerIndex::unpack(read)?;
 
     let data = <Vec<u8>>::unpack(read)?;
-    let events = Events::unpack_inner(code, &mut &data[..])?;
+    let events = Event::unpack_inner(code, &mut &data[..])?;
 
     Ok((index, events))
 }

@@ -11,3 +11,5 @@ thiserror = "1.0.26"
 btmgmt-packet-helper = { path = "helper" }
 bitflags = "1.2.1"
 uuid = "0.8.2"
+getset = "0.1.1"
+derive-new = "0.5.9"

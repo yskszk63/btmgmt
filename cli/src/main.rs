@@ -1,11 +1,11 @@
-use std::collections::HashSet;
 use std::str::FromStr;
 
 use btmgmt::client::Client;
 use btmgmt::command;
 use btmgmt::event::Event;
+use btmgmt::packet;
 use clap::Clap;
-use tokio::stream::StreamExt;
+use futures::StreamExt;
 
 fn length(len: usize) -> impl FnMut(&str) -> Result<(), anyhow::Error> {
     move |s| {
@@ -144,8 +144,8 @@ enum ControllerCommand {
     },
 
     Name {
-        name: btmgmt::Name,
-        short_name: Option<btmgmt::ShortName>,
+        name: packet::Name,
+        short_name: Option<packet::ShortName>,
     },
 
     Uuid {
@@ -175,7 +175,7 @@ impl ControllerCommand {
         match self {
             Self::Show => {
                 let reply = client
-                    .call(index, command::ReadControllerInformation::new())
+                    .call(index, command::ReadControllerInformation)
                     .await?;
                 println!("address: {}", reply.address());
                 println!("bluetooth version: {}", reply.bluetooth_version());
@@ -190,14 +190,14 @@ impl ControllerCommand {
             Self::Ls { extended } => {
                 if !extended {
                     let reply = client
-                        .call(None, command::ReadControllerIndexList::new())
+                        .call(None, command::ReadControllerIndexList)
                         .await?;
                     for c in reply {
                         println!("{}", u16::from(c));
                     }
                 } else {
                     let reply = client
-                        .call(None, command::ReadExtendedControllerIndexList::new())
+                        .call(None, command::ReadExtendedControllerIndexList)
                         .await?;
                     for (index, typ, bus) in reply {
                         println!("{} {:?} {:?}", u16::from(index), typ, bus);
@@ -210,19 +210,19 @@ impl ControllerCommand {
                 let reply = client
                     .call(index, command::SetPowered::new(powered))
                     .await?;
-                println!("{:?}", reply.current_settings());
+                println!("{:?}", &*reply);
             }
 
             Self::Discoverable { flag, timeout } => {
                 let flag = match flag {
-                    Discoerable::On => btmgmt::Discoverable::General,
-                    Discoerable::Off => btmgmt::Discoverable::Disable,
-                    Discoerable::Limited => btmgmt::Discoverable::Limited,
+                    Discoerable::On => packet::Discoverable::General,
+                    Discoerable::Off => packet::Discoverable::Disable,
+                    Discoerable::Limited => packet::Discoverable::Limited,
                 };
                 let reply = client
                     .call(index, command::SetDiscoverable::new(flag, *timeout))
                     .await?;
-                println!("OK {:?}", reply);
+                println!("OK {:?}", &*reply);
             }
 
             Self::Connectable { flag } => {
@@ -230,7 +230,7 @@ impl ControllerCommand {
                 let reply = client
                     .call(index, command::SetConnectable::new(flag))
                     .await?;
-                println!("OK {:?}", reply);
+                println!("OK {:?}", &*reply);
             }
 
             Self::FastConnectable { flag } => {
@@ -238,13 +238,13 @@ impl ControllerCommand {
                 let reply = client
                     .call(index, command::SetFastConnectable::new(flag))
                     .await?;
-                println!("OK {:?}", reply);
+                println!("OK {:?}", &*reply);
             }
 
             Self::Bondable { flag } => {
                 let flag = matches!(flag, OnOff::On);
                 let reply = client.call(index, command::SetBondable::new(flag)).await?;
-                println!("OK {:?}", reply);
+                println!("OK {:?}", &*reply);
             }
 
             Self::LinkSecurity { flag } => {
@@ -252,7 +252,7 @@ impl ControllerCommand {
                 let reply = client
                     .call(index, command::SetLinkSecurity::new(flag))
                     .await?;
-                println!("OK {:?}", reply);
+                println!("OK {:?}", &*reply);
             }
 
             Self::Ssp { flag } => {
@@ -260,32 +260,32 @@ impl ControllerCommand {
                 let reply = client
                     .call(index, command::SetSecureSimplePairing::new(flag))
                     .await?;
-                println!("OK {:?}", reply);
+                println!("OK {:?}", &*reply);
             }
 
             Self::Hs { flag } => {
                 let flag = matches!(flag, OnOff::On);
                 let reply = client.call(index, command::SetHighSpeed::new(flag)).await?;
-                println!("OK {:?}", reply);
+                println!("OK {:?}", &*reply);
             }
 
             Self::Le { flag } => {
                 let flag = matches!(flag, OnOff::On);
                 let reply = client.call(index, command::SetLowEnergy::new(flag)).await?;
-                println!("OK {:?}", reply);
+                println!("OK {:?}", &*reply);
             }
 
             Self::Bredr { flag } => {
                 let flag = matches!(flag, OnOff::On);
                 let reply = client.call(index, command::SetBrEdr::new(flag)).await?;
-                println!("OK {:?}", reply);
+                println!("OK {:?}", &*reply);
             }
 
             Self::Cod { major, minor } => {
                 let reply = client
                     .call(index, command::SetDeviceClass::new(*major, *minor))
                     .await?;
-                println!("{}", reply.class_of_device());
+                println!("{}", &*reply);
             }
 
             Self::Name { name, short_name } => {
@@ -296,7 +296,7 @@ impl ControllerCommand {
                             name.clone(),
                             short_name
                                 .clone()
-                                .unwrap_or_else(|| btmgmt::ShortName::new("").unwrap()),
+                                .unwrap_or_else(|| packet::ShortName::new("").unwrap()),
                         ),
                     )
                     .await?;
@@ -307,38 +307,38 @@ impl ControllerCommand {
             Self::Uuid { command } => match command {
                 UuidCommand::Add { val, svc_hint } => {
                     let reply = client
-                        .call(index, command::AddUuid::new(*val, *svc_hint))
+                        .call(index, command::AddUuid::new(val.clone(), *svc_hint))
                         .await?;
-                    println!("{}", reply.class_of_device());
+                    println!("{}", &*reply);
                 }
 
                 UuidCommand::Remove { val } => {
-                    let reply = client.call(index, command::RemoveUuid::new(*val)).await?;
-                    println!("{}", reply.class_of_device());
+                    let reply = client.call(index, command::RemoveUuid::new(val.clone())).await?;
+                    println!("{}", &*reply);
                 }
             },
 
             Self::Advertising { flag, connectable } => {
                 let flag = match flag {
-                    OnOff::On if *connectable => btmgmt::Advertising::Connectable,
-                    OnOff::On => btmgmt::Advertising::Enable,
-                    OnOff::Off => btmgmt::Advertising::Disable,
+                    OnOff::On if *connectable => packet::Advertising::Connectable,
+                    OnOff::On => packet::Advertising::Enable,
+                    OnOff::Off => packet::Advertising::Disable,
                 };
                 let reply = client
                     .call(index, command::SetAdvertising::new(flag))
                     .await?;
-                println!("{:?}", reply.current_settings());
+                println!("{:?}", &*reply);
             }
 
             Self::SecureConnections { flag } => {
                 let flag = match flag {
-                    OnOff::On => btmgmt::SecureConnections::Enable,
-                    OnOff::Off => btmgmt::SecureConnections::Disable,
+                    OnOff::On => packet::SecureConnections::Enable,
+                    OnOff::Off => packet::SecureConnections::Disable,
                 };
                 let reply = client
                     .call(index, command::SetSecureConnections::new(flag))
                     .await?;
-                println!("{:?}", reply.current_settings());
+                println!("{:?}", &*reply);
             }
         };
         Ok(())
@@ -347,9 +347,9 @@ impl ControllerCommand {
 
 #[derive(Debug, Clap)]
 enum UuidCommand {
-    Add { val: btmgmt::Uuid, svc_hint: u8 },
+    Add { val: packet::Uuid, svc_hint: u8 },
 
-    Remove { val: btmgmt::Uuid },
+    Remove { val: packet::Uuid },
 }
 
 #[derive(Debug, Clap)]
@@ -363,7 +363,7 @@ enum ConnectionCommand {
     Ls,
 
     Disconnect {
-        address: btmgmt::Address,
+        address: packet::Address,
         address_type: AddressType,
     },
 }
@@ -378,8 +378,8 @@ impl ConnectionCommand {
     async fn proc(&self, client: &Client, index: u16) -> anyhow::Result<()> {
         match self {
             ConnectionCommand::Ls => {
-                let reply = client.call(index, command::GetConnections::new()).await?;
-                for (addr, addr_type) in &reply {
+                let reply = client.call(index, command::GetConnections).await?;
+                for (addr, addr_type) in reply {
                     println!("{} {:?}", addr, addr_type);
                 }
             }
@@ -414,7 +414,7 @@ enum DiscoveryCommand {
         #[clap(long, short, conflicts_with = "limited")]
         rssi: Option<u8>,
         #[clap(long, short, conflicts_with = "limited")]
-        uuid: Vec<btmgmt::Uuid>,
+        uuid: Vec<packet::Uuid>,
         #[clap(long, short)]
         wait: bool,
     },
@@ -438,25 +438,24 @@ impl DiscoveryCommand {
                 uuid,
                 wait,
             } => {
-                let mut addr_type = HashSet::new();
+                let mut addr_type = packet::AddressTypes::default();
                 if *bredr || (!bredr && !le) {
-                    addr_type.insert(btmgmt::AddressType::BrEdr);
+                    addr_type.extend([packet::AddressType::BrEdr]);
                 }
                 if *le || (!bredr && !le) {
-                    addr_type.insert(btmgmt::AddressType::LePublic);
-                    addr_type.insert(btmgmt::AddressType::LeRandom);
+                    addr_type.extend([packet::AddressType::LePublic, packet::AddressType::LeRandom]);
                 }
 
                 if !limited {
                     let reply = client
                         .call(index, command::StartDiscovery::new(addr_type))
                         .await?;
-                    println!("{:?}", reply.address_type());
+                    println!("{:?}", &*reply);
                 } else if rssi.is_some() || !uuid.is_empty() {
                     let rssi = rssi.unwrap_or(127);
                     let mut uuid = uuid.clone();
                     if uuid.is_empty() {
-                        uuid.push(btmgmt::Uuid::default());
+                        uuid.push(packet::Uuid::default());
                     }
                     let reply = client
                         .call(
@@ -464,12 +463,12 @@ impl DiscoveryCommand {
                             command::StartServiceDiscovery::new(addr_type, rssi, uuid),
                         )
                         .await?;
-                    println!("{:?}", reply.address_type());
+                    println!("{:?}", &*reply);
                 } else {
                     let reply = client
                         .call(index, command::StartLimitedDiscovery::new(addr_type))
                         .await?;
-                    println!("{:?}", reply.address_type());
+                    println!("{:?}", &*reply);
                 }
 
                 if *wait {
@@ -484,18 +483,17 @@ impl DiscoveryCommand {
             }
 
             DiscoveryCommand::Stop { bredr, le } => {
-                let mut addr_type = HashSet::new();
+                let mut addr_type = packet::AddressTypes::default();
                 if *bredr || (!bredr && !le) {
-                    addr_type.insert(btmgmt::AddressType::BrEdr);
+                    addr_type.extend([packet::AddressType::BrEdr]);
                 }
                 if *le || (!bredr && !le) {
-                    addr_type.insert(btmgmt::AddressType::LePublic);
-                    addr_type.insert(btmgmt::AddressType::LeRandom);
+                    addr_type.extend([packet::AddressType::LePublic,packet::AddressType::LeRandom]);
                 }
                 let reply = client
                     .call(index, command::StopDiscovery::new(addr_type))
                     .await?;
-                println!("{:?}", reply.address_type());
+                println!("{:?}", &*reply);
             }
         };
         Ok(())
@@ -543,7 +541,7 @@ impl SystemConfigurationCommand {
         match self {
             Self::Get => {
                 let reply = client
-                    .call(index, command::ReadDefaultSystemConfiguration::new())
+                    .call(index, command::ReadDefaultSystemConfiguration)
                     .await?;
                 for item in reply {
                     println!("{:?} {}", item.for_type(), item.value_as_u16().unwrap());
@@ -554,7 +552,7 @@ impl SystemConfigurationCommand {
                 adv_min_interval,
                 adv_max_interval,
             } => {
-                use btmgmt::SystemConfigurationParameter::*;
+                use packet::SystemConfigurationParameter::*;
                 let mut req = vec![];
                 if let Some(val) = adv_min_interval {
                     req.push(LEAdvertisementMinInterval(*val));
@@ -588,7 +586,7 @@ impl RuntimeConfigurationCommand {
         match self {
             Self::Get => {
                 let reply = client
-                    .call(index, command::ReadDefaultRuntimeConfiguration::new())
+                    .call(index, command::ReadDefaultRuntimeConfiguration)
                     .await?;
                 for item in reply {
                     println!("{:?} {}", item.for_type(), item.value_as_u16().unwrap());
@@ -635,7 +633,7 @@ impl AdvertiseCommand {
         match self {
             Self::Features => {
                 let reply = client
-                    .call(index, command::ReadAdvertisingFeature::new())
+                    .call(index, command::ReadAdvertisingFeature)
                     .await?;
                 println!("supported flags: {:?}", reply.supported_flags());
                 println!("max adv data len: {}", reply.max_adv_data_len());
@@ -656,7 +654,7 @@ impl AdvertiseCommand {
             } => {
                 let adv_data = adv_data.clone().unwrap_or_default();
                 let scan_resp = scan_resp.clone().unwrap_or_default();
-                let flags = btmgmt::AdvertisingFlag::empty();
+                let flags = packet::AdvertisingFlag::empty();
                 let reply = client
                     .call(
                         index,
@@ -665,8 +663,7 @@ impl AdvertiseCommand {
                             flags,
                             *duration,
                             *timeout,
-                            adv_data.0,
-                            scan_resp.0,
+                            packet::AdvDataScanResp::new(adv_data.0, scan_resp.0),
                         ),
                     )
                     .await?;
@@ -715,10 +712,10 @@ impl AdvertiseMonitorCommand {
                     .iter()
                     .zip(offset.iter())
                     .zip(value.iter())
-                    .map(|((t, o), v)| btmgmt::AdvertisementPattern::new(*t, *o, &v.0))
+                    .map(|((t, o), v)| packet::AdvertisementPattern::new(*t, *o, &v.0))
                     .collect::<command::AddAdvertisementPatternsMonitor>();
                 let reply = client.call(index, patterns).await?;
-                println!("{:?}", reply.monitor_handle());
+                println!("{:?}", &*reply);
             }
 
             Self::Remove { handle } => {
@@ -728,7 +725,7 @@ impl AdvertiseMonitorCommand {
                         command::RemoveAdvertisementPatternsMonitor::new((*handle).into()),
                     )
                     .await?;
-                println!("{:?}", reply.monitor_handle());
+                println!("{:?}", &*reply);
             }
         };
         Ok(())
@@ -739,7 +736,7 @@ impl AdvertiseMonitorCommand {
 enum DeviceCommand {
     Add {
         #[clap(long, short)]
-        address: btmgmt::Address,
+        address: packet::Address,
 
         #[clap(long, short, conflicts_with_all=&["le", "random"])]
         bredr: bool,
@@ -759,7 +756,7 @@ enum DeviceCommand {
 
     Remove {
         #[clap(long, short)]
-        address: btmgmt::Address,
+        address: packet::Address,
 
         #[clap(long, short, conflicts_with_all=&["le", "random"])]
         bredr: bool,
@@ -773,7 +770,7 @@ enum DeviceCommand {
 
     Block {
         #[clap(long, short)]
-        address: btmgmt::Address,
+        address: packet::Address,
 
         #[clap(long, short, conflicts_with_all=&["le", "random"])]
         bredr: bool,
@@ -787,7 +784,7 @@ enum DeviceCommand {
 
     Unblock {
         #[clap(long, short)]
-        address: btmgmt::Address,
+        address: packet::Address,
 
         #[clap(long, short, conflicts_with_all=&["le", "random"])]
         bredr: bool,
@@ -801,7 +798,7 @@ enum DeviceCommand {
 
     Pair {
         #[clap(long, short)]
-        address: btmgmt::Address,
+        address: packet::Address,
 
         #[clap(long, short, conflicts_with_all=&["le", "random"])]
         bredr: bool,
@@ -830,7 +827,7 @@ enum DeviceCommand {
 
     CancelPair {
         #[clap(long, short)]
-        address: btmgmt::Address,
+        address: packet::Address,
 
         #[clap(long, short, conflicts_with_all=&["le", "random"])]
         bredr: bool,
@@ -844,7 +841,7 @@ enum DeviceCommand {
 
     Unpair {
         #[clap(long, short)]
-        address: btmgmt::Address,
+        address: packet::Address,
 
         #[clap(long, short, conflicts_with_all=&["le", "random"])]
         bredr: bool,
@@ -872,15 +869,15 @@ impl DeviceCommand {
                 background,
             } => {
                 let addr_type = match (bredr, le, random) {
-                    (true, false, false) | (false, false, false) => btmgmt::AddressType::BrEdr,
-                    (false, true, false) => btmgmt::AddressType::LePublic,
-                    (false, false, true) | (false, true, true) => btmgmt::AddressType::LeRandom,
+                    (true, false, false) | (false, false, false) => packet::AddressType::BrEdr,
+                    (false, true, false) => packet::AddressType::LePublic,
+                    (false, false, true) | (false, true, true) => packet::AddressType::LeRandom,
                     _ => unreachable!(),
                 };
                 let action = match (autoconnect, background) {
-                    (false, false) => btmgmt::Action::Allow,
-                    (true, false) => btmgmt::Action::AutoConnect,
-                    (false, true) => btmgmt::Action::Background,
+                    (false, false) => packet::Action::Allow,
+                    (true, false) => packet::Action::AutoConnect,
+                    (false, true) => packet::Action::Background,
                     _ => unreachable!(),
                 };
                 let reply = client
@@ -899,9 +896,9 @@ impl DeviceCommand {
                 random,
             } => {
                 let addr_type = match (bredr, le, random) {
-                    (true, false, false) | (false, false, false) => btmgmt::AddressType::BrEdr,
-                    (false, true, false) => btmgmt::AddressType::LePublic,
-                    (false, false, true) | (false, true, true) => btmgmt::AddressType::LeRandom,
+                    (true, false, false) | (false, false, false) => packet::AddressType::BrEdr,
+                    (false, true, false) => packet::AddressType::LePublic,
+                    (false, false, true) | (false, true, true) => packet::AddressType::LeRandom,
                     _ => unreachable!(),
                 };
                 let reply = client
@@ -920,9 +917,9 @@ impl DeviceCommand {
                 random,
             } => {
                 let addr_type = match (bredr, le, random) {
-                    (true, false, false) | (false, false, false) => btmgmt::AddressType::BrEdr,
-                    (false, true, false) => btmgmt::AddressType::LePublic,
-                    (false, false, true) | (false, true, true) => btmgmt::AddressType::LeRandom,
+                    (true, false, false) | (false, false, false) => packet::AddressType::BrEdr,
+                    (false, true, false) => packet::AddressType::LePublic,
+                    (false, false, true) | (false, true, true) => packet::AddressType::LeRandom,
                     _ => unreachable!(),
                 };
                 let reply = client
@@ -938,9 +935,9 @@ impl DeviceCommand {
                 random,
             } => {
                 let addr_type = match (bredr, le, random) {
-                    (true, false, false) | (false, false, false) => btmgmt::AddressType::BrEdr,
-                    (false, true, false) => btmgmt::AddressType::LePublic,
-                    (false, false, true) | (false, true, true) => btmgmt::AddressType::LeRandom,
+                    (true, false, false) | (false, false, false) => packet::AddressType::BrEdr,
+                    (false, true, false) => packet::AddressType::LePublic,
+                    (false, false, true) | (false, true, true) => packet::AddressType::LeRandom,
                     _ => unreachable!(),
                 };
                 let reply = client
@@ -964,9 +961,9 @@ impl DeviceCommand {
                 keyboard_display,
             } => {
                 let addr_type = match (bredr, le, random) {
-                    (true, false, false) | (false, false, false) => btmgmt::AddressType::BrEdr,
-                    (false, true, false) => btmgmt::AddressType::LePublic,
-                    (false, false, true) | (false, true, true) => btmgmt::AddressType::LeRandom,
+                    (true, false, false) | (false, false, false) => packet::AddressType::BrEdr,
+                    (false, true, false) => packet::AddressType::LePublic,
+                    (false, false, true) | (false, true, true) => packet::AddressType::LeRandom,
                     _ => unreachable!(),
                 };
                 let capability = match (
@@ -976,12 +973,12 @@ impl DeviceCommand {
                     no_input_no_output,
                     keyboard_display,
                 ) {
-                    (false, false, false, false, false) => btmgmt::IoCapability::NoInputNoOutput,
-                    (true, false, false, false, false) => btmgmt::IoCapability::DisplayOnly,
-                    (false, true, false, false, false) => btmgmt::IoCapability::DisplayYesNo,
-                    (false, false, true, false, false) => btmgmt::IoCapability::KeyboardOnly,
-                    (false, false, false, true, false) => btmgmt::IoCapability::NoInputNoOutput,
-                    (false, false, false, false, true) => btmgmt::IoCapability::KeyboardDisplay,
+                    (false, false, false, false, false) => packet::IoCapability::NoInputNoOutput,
+                    (true, false, false, false, false) => packet::IoCapability::DisplayOnly,
+                    (false, true, false, false, false) => packet::IoCapability::DisplayYesNo,
+                    (false, false, true, false, false) => packet::IoCapability::KeyboardOnly,
+                    (false, false, false, true, false) => packet::IoCapability::NoInputNoOutput,
+                    (false, false, false, false, true) => packet::IoCapability::KeyboardDisplay,
                     _ => unreachable!(),
                 };
                 let reply = client
@@ -1000,9 +997,9 @@ impl DeviceCommand {
                 random,
             } => {
                 let addr_type = match (bredr, le, random) {
-                    (true, false, false) | (false, false, false) => btmgmt::AddressType::BrEdr,
-                    (false, true, false) => btmgmt::AddressType::LePublic,
-                    (false, false, true) | (false, true, true) => btmgmt::AddressType::LeRandom,
+                    (true, false, false) | (false, false, false) => packet::AddressType::BrEdr,
+                    (false, true, false) => packet::AddressType::LePublic,
+                    (false, false, true) | (false, true, true) => packet::AddressType::LeRandom,
                     _ => unreachable!(),
                 };
                 let reply = client
@@ -1022,9 +1019,9 @@ impl DeviceCommand {
                 disconnect,
             } => {
                 let addr_type = match (bredr, le, random) {
-                    (true, false, false) | (false, false, false) => btmgmt::AddressType::BrEdr,
-                    (false, true, false) => btmgmt::AddressType::LePublic,
-                    (false, false, true) | (false, true, true) => btmgmt::AddressType::LeRandom,
+                    (true, false, false) | (false, false, false) => packet::AddressType::BrEdr,
+                    (false, true, false) => packet::AddressType::LePublic,
+                    (false, false, true) | (false, true, true) => packet::AddressType::LeRandom,
                     _ => unreachable!(),
                 };
                 let reply = client
@@ -1044,7 +1041,7 @@ impl DeviceCommand {
 enum OobCommand {
     Add {
         #[clap(long, short)]
-        address: btmgmt::Address,
+        address: packet::Address,
 
         #[clap(long, short, conflicts_with_all=&["le", "random"])]
         bredr: bool,
@@ -1070,7 +1067,7 @@ enum OobCommand {
 
     Remove {
         #[clap(long, short)]
-        address: btmgmt::Address,
+        address: packet::Address,
 
         #[clap(long, short, conflicts_with_all=&["le", "random"])]
         bredr: bool,
@@ -1113,9 +1110,9 @@ impl OobCommand {
                     v
                 };
                 let addr_type = match (bredr, le, random) {
-                    (true, false, false) | (false, false, false) => btmgmt::AddressType::BrEdr,
-                    (false, true, false) => btmgmt::AddressType::LePublic,
-                    (false, false, true) | (false, true, true) => btmgmt::AddressType::LeRandom,
+                    (true, false, false) | (false, false, false) => packet::AddressType::BrEdr,
+                    (false, true, false) => packet::AddressType::LePublic,
+                    (false, false, true) | (false, true, true) => packet::AddressType::LeRandom,
                     _ => unreachable!(),
                 };
                 let hash192 = into_array(hash192.0.clone());
@@ -1145,9 +1142,9 @@ impl OobCommand {
                 random,
             } => {
                 let addr_type = match (bredr, le, random) {
-                    (true, false, false) | (false, false, false) => btmgmt::AddressType::BrEdr,
-                    (false, true, false) => btmgmt::AddressType::LePublic,
-                    (false, false, true) | (false, true, true) => btmgmt::AddressType::LeRandom,
+                    (true, false, false) | (false, false, false) => packet::AddressType::BrEdr,
+                    (false, true, false) => packet::AddressType::LePublic,
+                    (false, false, true) | (false, true, true) => packet::AddressType::LeRandom,
                     _ => unreachable!(),
                 };
                 let reply = client
@@ -1167,10 +1164,10 @@ impl OobCommand {
                 if *extended {
                     let addr_type = match (bredr, le) {
                         (false, false) | (true, false) => {
-                            vec![btmgmt::AddressType::BrEdr].into_iter().collect()
+                            vec![packet::AddressType::BrEdr].into_iter().collect()
                         }
                         (false, true) => {
-                            vec![btmgmt::AddressType::LePublic, btmgmt::AddressType::LeRandom]
+                            vec![packet::AddressType::LePublic, packet::AddressType::LeRandom]
                                 .into_iter()
                                 .collect()
                         }
@@ -1185,7 +1182,7 @@ impl OobCommand {
                     println!("OK {:?}", reply);
                 } else {
                     let reply = client
-                        .call(index, command::ReadLocalOutOfBandData::new())
+                        .call(index, command::ReadLocalOutOfBandData)
                         .await?;
                     println!("OK {:?}", reply);
                 }
@@ -1232,15 +1229,15 @@ impl FromStr for Discoerable {
 }
 
 #[derive(Debug)]
-struct AddressType(btmgmt::AddressType);
+struct AddressType(packet::AddressType);
 
 impl FromStr for AddressType {
     type Err = String;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "bredr" => Ok(Self(btmgmt::AddressType::BrEdr)),
-            "le_public" => Ok(Self(btmgmt::AddressType::LePublic)),
-            "le_random" => Ok(Self(btmgmt::AddressType::LeRandom)),
+            "bredr" => Ok(Self(packet::AddressType::BrEdr)),
+            "le_public" => Ok(Self(packet::AddressType::LePublic)),
+            "le_random" => Ok(Self(packet::AddressType::LeRandom)),
             v => Err(v.into()),
         }
     }
@@ -1279,24 +1276,23 @@ Err("invalid format".into())
 }
 */
 
-fn handle_event(index: btmgmt::ControllerIndex, event: Event) {
+fn handle_event(index: packet::ControllerIndex, event: Event) {
     println!("{:?} {:?}", index, event);
 }
 
 #[tokio::main(flavor = "current_thread")]
 async fn main() -> anyhow::Result<()> {
-    env_logger::init();
+    pretty_env_logger::init();
 
     let opt = Opt::parse();
 
     let index = opt.index;
     let listen = opt.listen || opt.command.is_none();
 
-    let (client, handle) = Client::open()?;
-    let handle = tokio::spawn(handle);
+    let client = Client::open()?;
 
     let mut events = client.events().await;
-    tokio::spawn(async move {
+    let listen_task = tokio::spawn(async move {
         while let Some((index, event)) = events.next().await {
             handle_event(index, event);
         }
@@ -1306,14 +1302,14 @@ async fn main() -> anyhow::Result<()> {
         match command {
             Command::Version => {
                 let reply = client
-                    .call(None, command::ReadManagementVersionInformation::new())
+                    .call(None, command::ReadManagementVersionInformation)
                     .await?;
                 println!("{}.{}", reply.version(), reply.revision());
             }
 
             Command::SupportedCommands => {
                 let reply = client
-                    .call(None, command::ReadManagementSupportedCommands::new())
+                    .call(None, command::ReadManagementSupportedCommands)
                     .await?;
                 println!("commands");
                 for command in reply.commands() {
@@ -1341,12 +1337,8 @@ async fn main() -> anyhow::Result<()> {
     }
 
     if listen {
-        std::mem::forget(client);
-    } else {
-        drop(client);
+        listen_task.await?;
     }
-
-    handle.await??;
 
     Ok(())
 }

@@ -13,7 +13,8 @@ fn main() {
     for a in v.iter_mut() {
         *a += 1;
     }
+    v.extend([4]);
     for a in v {
-        assert!(a == 1 || a == 2 || a == 3);
+        assert!(a == 1 || a == 2 || a == 3 || a == 4);
     }
 }

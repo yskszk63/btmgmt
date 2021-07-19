@@ -132,6 +132,12 @@ fn derive(input: TokenStream) -> syn::Result<TokenStream> {
             }
         }
 
+        impl #impl_generics ::std::iter::Extend<#item> for #ident #type_generics #where_clause {
+            fn extend<T789979AD04B840B9BCA2350BD2215CBC>(&mut self, iter: T789979AD04B840B9BCA2350BD2215CBC) where T789979AD04B840B9BCA2350BD2215CBC: ::std::iter::IntoIterator<Item = #item> {
+                self.0.extend(iter)
+            }
+        }
+
         impl #impl_generics #ident #type_generics #where_clause {
             pub fn iter(&self) -> impl std::iter::Iterator<Item = &#item> {
                 self.0.iter()
