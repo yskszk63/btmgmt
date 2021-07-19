@@ -11,6 +11,7 @@ use std::str::FromStr;
 
 use bitflags::bitflags;
 use getset::Getters;
+use derive_new::new as New;
 
 use btmgmt_packet_helper as helper;
 #[doc(hidden)]
@@ -20,7 +21,7 @@ use helper::helper::{Newtype, IterNewtype};
 pub mod command;
 pub mod event;
 
-#[derive(Debug, Clone, Newtype)]
+#[derive(Debug, Clone, Newtype, New)]
 pub struct Address(bdaddr::Address);
 
 impl FromStr for Address {
@@ -347,7 +348,7 @@ pub enum Discoverable {
     Limited = 0x02,
 }
 
-#[derive(Debug, Clone, Default, Newtype)]
+#[derive(Debug, Clone, Default, Newtype, New)]
 pub struct Uuid(uuid::Uuid);
 
 impl Pack for Uuid {
@@ -385,13 +386,14 @@ pub enum LinkKeyType {
     AuthenticatedCombinationkeyfromP256 = 0x08,
 }
 
-#[derive(Debug, Clone, Pack, Unpack)]
+#[derive(Debug, Clone, Pack, Unpack, Getters, New)]
+#[getset(get = "pub")]
 pub struct LinkKey {
-    pub address: Address,
-    pub address_type: AddressType,
-    pub key_type: LinkKeyType,
-    pub value: [u8; 16],
-    pub pin_length: u8,
+    address: Address,
+    address_type: AddressType,
+    key_type: LinkKeyType,
+    value: [u8; 16],
+    pin_length: u8,
 }
 
 #[derive(Debug, Clone, Pack, Unpack)]
@@ -404,23 +406,25 @@ pub enum LongTermKeyType {
     DebugKeyP256 = 0x04,
 }
 
-#[derive(Debug, Clone, Pack, Unpack)]
+#[derive(Debug, Clone, Pack, Unpack, Getters, New)]
+#[getset(get = "pub")]
 pub struct LongTermKey {
-    pub address: Address,
-    pub address_type: AddressType,
-    pub key_type: LongTermKeyType,
-    pub master: bool,
-    pub encryption_size: u8,
-    pub encryption_diversifier: u16,
-    pub random_number: [u8; 8],
-    pub value: [u8; 16],
+    address: Address,
+    address_type: AddressType,
+    key_type: LongTermKeyType,
+    master: bool,
+    encryption_size: u8,
+    encryption_diversifier: u16,
+    random_number: [u8; 8],
+    value: [u8; 16],
 }
 
-#[derive(Debug, Clone, Pack, Unpack)]
+#[derive(Debug, Clone, Pack, Unpack, Getters, New)]
+#[getset(get = "pub")]
 pub struct IdentityResolvingKey {
-    pub address: Address,
-    pub address_type: AddressType,
-    pub value: [u8; 16],
+    address: Address,
+    address_type: AddressType,
+    value: [u8; 16],
 }
 
 #[derive(Debug, Pack, Unpack)]
@@ -481,14 +485,15 @@ pub enum Action {
     AutoConnect = 2,
 }
 
-#[derive(Debug, Pack, Unpack)]
+#[derive(Debug, Pack, Unpack, New, Getters)]
+#[getset(get = "pub")]
 pub struct ConnectionParameter {
-    pub address: Address,
-    pub address_type: AddressType,
-    pub min_connection_interval: u16,
-    pub max_connection_interval: u16,
-    pub connection_latency: u16,
-    pub supervision_timeout: u16,
+    address: Address,
+    address_type: AddressType,
+    min_connection_interval: u16,
+    max_connection_interval: u16,
+    connection_latency: u16,
+    supervision_timeout: u16,
 }
 
 bitflags! {
@@ -628,14 +633,8 @@ bitflags! {
     }
 }
 
-#[derive(Debug, Clone, Pack, Unpack)]
+#[derive(Debug, Clone, Pack, Unpack, Newtype, New)]
 pub struct AdvertiseInstance(u8);
-
-impl From<u8> for AdvertiseInstance {
-    fn from(v: u8) -> Self {
-        Self(v)
-    }
-}
 
 #[derive(Debug, IterNewtype)]
 pub struct AdvertiseInstances(Vec<AdvertiseInstance>);
@@ -750,10 +749,11 @@ pub enum BlockedKeyType {
     IdentityResolvingKey = 0x02,
 }
 
-#[derive(Debug, Pack, Unpack)]
+#[derive(Debug, Pack, Unpack, New, Getters)]
+#[getset(get = "pub")]
 pub struct BlockedKey {
-    pub key_type: BlockedKeyType,
-    pub value: [u8; 16],
+    key_type: BlockedKeyType,
+    value: [u8; 16],
 }
 
 bitflags! {
@@ -918,14 +918,8 @@ bitflags! {
     }
 }
 
-#[derive(Debug, Clone, Pack, Unpack)]
+#[derive(Debug, Clone, Pack, Unpack, Newtype, New)]
 pub struct AdvertisementMonitorHandle(u16);
-
-impl From<u16> for AdvertisementMonitorHandle {
-    fn from(v: u16) -> Self {
-        Self(v)
-    }
-}
 
 #[derive(Debug, Pack, Unpack, Getters)]
 #[getset(get = "pub")]
@@ -988,12 +982,13 @@ pub enum SignatureResolvingKeyType {
     AuthenticatedRemoteCsrk = 0x03,
 }
 
-#[derive(Debug, Clone, Pack, Unpack)]
+#[derive(Debug, Clone, Pack, Unpack, New, Getters)]
+#[getset(get = "pub")]
 pub struct SignatureResolvingKey {
-    pub address: Address,
-    pub address_type: AddressType,
-    pub typ: SignatureResolvingKeyType,
-    pub value: [u8; 16],
+    address: Address,
+    address_type: AddressType,
+    typ: SignatureResolvingKeyType,
+    value: [u8; 16],
 }
 
 #[derive(Debug, Clone, Pack, Unpack)]

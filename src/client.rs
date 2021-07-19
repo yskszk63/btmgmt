@@ -343,13 +343,13 @@ impl Client {
         }
         match result.1 {
             Event::CommandComplete(comp) => {
-                if comp.opcode != expected_code {
-                    return Err(Error::Unexpected(format!("unexpected code received {:?} != {:?}", expected_code, comp.opcode)));
+                if comp.opcode() != &expected_code {
+                    return Err(Error::Unexpected(format!("unexpected code received {:?} != {:?}", expected_code, comp.opcode())));
                 }
-                if !comp.status.success() {
+                if !comp.status().success() {
                     return Err(Error::Unexpected("command complete but not success".into()));
                 }
-                let mut data = &comp.data[..];
+                let mut data = &comp.data()[..];
                 let result = C::Reply::unpack(&mut data)?;
                 Ok(result)
             }
@@ -367,7 +367,6 @@ impl Client {
 
 #[cfg(test)]
 mod tests {
-    use crate::event::CommandComplete;
     use crate::packet::ErrorCode;
     use crate::command::CommandCode;
     use std::array::IntoIter;
@@ -391,10 +390,10 @@ mod tests {
         while let Some(r) = stream.next().await {
             let (index, event) = r.unwrap();
             assert_eq!(ControllerIndex::NonController, index);
-            if let Event::CommandComplete(CommandComplete { opcode, status, data } ) = event {
-                assert_eq!(CommandCode::ReadManagementVersionInformation, opcode);
-                assert_eq!(ErrorCode::Success, status);
-                assert_eq!(&[0x01, 0x13, 0x00][..], data.as_ref());
+            if let Event::CommandComplete(comp) = event {
+                assert_eq!(&CommandCode::ReadManagementVersionInformation, comp.opcode());
+                assert_eq!(&ErrorCode::Success, comp.status());
+                assert_eq!(&[0x01, 0x13, 0x00][..], comp.data().as_ref());
             } else {
                 panic!()
             };

@@ -15,20 +15,22 @@ mod imp {
     ///
     /// see [bluez
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
-    #[derive(Debug, Clone, Unpack)]
+    #[derive(Debug, Clone, Unpack, Getters)]
     #[event(0x0001)]
+    #[getset(get = "pub")]
     pub struct CommandComplete {
-        pub opcode: crate::command::CommandCode,
-        pub status: ErrorCode,
-        pub data: Box<[u8]>,
+        opcode: crate::command::CommandCode,
+        status: ErrorCode,
+        data: Box<[u8]>,
     }
 
     /// Command Status Event
     ///
     /// see [bluez
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
-    #[derive(Debug, Clone, Unpack)]
+    #[derive(Debug, Clone, Unpack, Getters)]
     #[event(0x0002)]
+    #[getset(get = "pub")]
     pub struct CommandStatus {
         pub opcode: crate::command::CommandCode,
         pub status: ErrorCode,
@@ -78,11 +80,12 @@ mod imp {
     ///
     /// see [bluez
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
-    #[derive(Debug, Clone, Unpack)]
+    #[derive(Debug, Clone, Unpack, Getters)]
     #[event(0x0008)]
+    #[getset(get = "pub")]
     pub struct LocalNameChanged {
-        pub name: super::Name,
-        pub short_name: super::ShortName,
+        name: super::Name,
+        short_name: super::ShortName,
     }
 
 
@@ -90,121 +93,131 @@ mod imp {
     ///
     /// see [bluez
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
-    #[derive(Debug, Clone, Unpack)]
+    #[derive(Debug, Clone, Unpack, Getters)]
     #[event(0x0009)]
+    #[getset(get = "pub")]
     pub struct NewLinkKey {
-        pub store_hint: bool,
-        pub key: super::LinkKey,
+        store_hint: bool,
+        key: super::LinkKey,
     }
 
     /// New Long Term Key Event
     ///
     /// see [bluez
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
-    #[derive(Debug, Clone, Unpack)]
+    #[derive(Debug, Clone, Unpack, Getters)]
     #[event(0x000A)]
+    #[getset(get = "pub")]
     pub struct NewLongTermKey {
-        pub store_hint: bool,
-        pub key: super::LongTermKey,
+        store_hint: bool,
+        key: super::LongTermKey,
     }
 
     /// Device Connected Event
     ///
     /// see [bluez
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
-    #[derive(Debug, Clone, Unpack)]
+    #[derive(Debug, Clone, Unpack, Getters)]
     #[event(0x000B)]
+    #[getset(get = "pub")]
     pub struct DeviceConnected {
-        pub address: super::Address,
-        pub address_type: super::AddressType,
-        pub flags: super::DeviceConnectFlags,
-        pub eir_data: super::VariableLengthBytes,
+        address: super::Address,
+        address_type: super::AddressType,
+        flags: super::DeviceConnectFlags,
+        eir_data: super::VariableLengthBytes,
     }
 
     /// Device Disconnected Event
     ///
     /// see [bluez
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
-    #[derive(Debug, Clone, Unpack)]
+    #[derive(Debug, Clone, Unpack, Getters)]
     #[event(0x000C)]
+    #[getset(get = "pub")]
     pub struct DeviceDisconnect {
-        pub address: super::Address,
-        pub address_type: super::AddressType,
-        pub reason: super::DeviceDisconnectReason,
+        address: super::Address,
+        address_type: super::AddressType,
+        reason: super::DeviceDisconnectReason,
     }
 
     /// Connect Failed Event
     ///
     /// see [bluez
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
-    #[derive(Debug, Clone, Unpack)]
+    #[derive(Debug, Clone, Unpack, Getters)]
     #[event(0x000D)]
+    #[getset(get = "pub")]
     pub struct ConnectFailed {
-        pub address: super::Address,
-        pub address_type: super::AddressType,
-        pub status: super::ErrorCode,
+        address: super::Address,
+        address_type: super::AddressType,
+        status: super::ErrorCode,
     }
 
     /// PIN Code Request Event
     ///
     /// see [bluez
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
-    #[derive(Debug, Clone, Unpack)]
+    #[derive(Debug, Clone, Unpack, Getters)]
     #[event(0x000E)]
+    #[getset(get = "pub")]
     pub struct PinCodeRequest {
-        pub address: super::Address,
-        pub address_type: super::AddressType,
-        pub secure: bool,
+        address: super::Address,
+        address_type: super::AddressType,
+        secure: bool,
     }
 
     /// User Confirmation Request Event
     ///
     /// see [bluez
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
-    #[derive(Debug, Clone, Unpack)]
+    #[derive(Debug, Clone, Unpack, Getters)]
     #[event(0x000F)]
+    #[getset(get = "pub")]
     pub struct UserConfirmationRequest {
-        pub address: super::Address,
-        pub address_type: super::AddressType,
-        pub confirm_hint: super::ConfirmHint,
-        pub value: [u8; 4],
+        address: super::Address,
+        address_type: super::AddressType,
+        confirm_hint: super::ConfirmHint,
+        value: [u8; 4],
     }
 
     /// User Passkey Request Event
     ///
     /// see [bluez
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
-    #[derive(Debug, Clone, Unpack)]
+    #[derive(Debug, Clone, Unpack, Getters)]
     #[event(0x0010)]
+    #[getset(get = "pub")]
     pub struct UserPasskeyRequest {
-        pub address: super::Address,
-        pub address_type: super::AddressType,
+        address: super::Address,
+        address_type: super::AddressType,
     }
 
     /// Authentication Failed Event
     ///
     /// see [bluez
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
-    #[derive(Debug, Clone, Unpack)]
+    #[derive(Debug, Clone, Unpack, Getters)]
     #[event(0x0011)]
+    #[getset(get = "pub")]
     pub struct AuthenticationFailed {
-        pub address: super::Address,
-        pub address_type: super::AddressType,
-        pub status: super::ErrorCode,
+        address: super::Address,
+        address_type: super::AddressType,
+        status: super::ErrorCode,
     }
 
     /// Device Found Event
     ///
     /// see [bluez
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
-    #[derive(Debug, Clone, Unpack)]
+    #[derive(Debug, Clone, Unpack, Getters)]
     #[event(0x0012)]
+    #[getset(get = "pub")]
     pub struct DeviceFound {
-        pub address: super::Address,
-        pub address_type: super::AddressType,
-        pub rssi: u8,
-        pub flags: super::DeviceConnectFlags,
-        pub eir_data: super::VariableLengthBytes,
+        address: super::Address,
+        address_type: super::AddressType,
+        rssi: u8,
+        flags: super::DeviceConnectFlags,
+        eir_data: super::VariableLengthBytes,
     }
 
     /// Discovering Event
@@ -223,107 +236,116 @@ mod imp {
     ///
     /// see [bluez
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
-    #[derive(Debug, Clone, Unpack)]
+    #[derive(Debug, Clone, Unpack, Getters)]
     #[event(0x0014)]
+    #[getset(get = "pub")]
     pub struct DeviceBlocked {
-        pub address: super::Address,
-        pub address_type: super::AddressType,
+        address: super::Address,
+        address_type: super::AddressType,
     }
 
     /// Device Unblocked Event
     ///
     /// see [bluez
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
-    #[derive(Debug, Clone, Unpack)]
+    #[derive(Debug, Clone, Unpack, Getters)]
     #[event(0x0015)]
+    #[getset(get = "pub")]
     pub struct DeviceUnblocked {
-        pub address: super::Address,
-        pub address_type: super::AddressType,
+        address: super::Address,
+        address_type: super::AddressType,
     }
 
     /// Device Unpaired Event
     ///
     /// see [bluez
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
-    #[derive(Debug, Clone, Unpack)]
+    #[derive(Debug, Clone, Unpack, Getters)]
     #[event(0x0016)]
+    #[getset(get = "pub")]
     pub struct DeviceUnpaired {
-        pub address: super::Address,
-        pub address_type: super::AddressType,
+        address: super::Address,
+        address_type: super::AddressType,
     }
 
     /// Passkey Notify Event
     ///
     /// see [bluez
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
-    #[derive(Debug, Clone, Unpack)]
+    #[derive(Debug, Clone, Unpack, Getters)]
     #[event(0x0017)]
+    #[getset(get = "pub")]
     pub struct PasskeyNotify {
-        pub address: super::Address,
-        pub address_type: super::AddressType,
-        pub passkey: u32,
-        pub entered: u8,
+        address: super::Address,
+        address_type: super::AddressType,
+        passkey: u32,
+        entered: u8,
     }
 
     /// New Identity Resolving Key Event
     ///
     /// see [bluez
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
-    #[derive(Debug, Clone, Unpack)]
+    #[derive(Debug, Clone, Unpack, Getters)]
     #[event(0x0018)]
+    #[getset(get = "pub")]
     pub struct NewIdentityResolvingKey {
-        pub store_hint: bool,
-        pub random_address: super::Address,
-        pub key: super::IdentityResolvingKey,
+        store_hint: bool,
+        random_address: super::Address,
+        key: super::IdentityResolvingKey,
     }
 
     /// New Signature Resolving Key Event
     ///
     /// see [bluez
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
-    #[derive(Debug, Clone, Unpack)]
+    #[derive(Debug, Clone, Unpack, Getters)]
     #[event(0x0019)]
+    #[getset(get = "pub")]
     pub struct NewSignatureResolvingKey {
-        pub store_hint: bool,
-        pub key: super::SignatureResolvingKey,
+        store_hint: bool,
+        key: super::SignatureResolvingKey,
     }
 
     /// Device Added Event
     ///
     /// see [bluez
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
-    #[derive(Debug, Clone, Unpack)]
+    #[derive(Debug, Clone, Unpack, Getters)]
     #[event(0x001A)]
+    #[getset(get = "pub")]
     pub struct DeviceAdded {
-        pub address: super::Address,
-        pub address_type: super::AddressType,
-        pub action: super::Action,
+        address: super::Address,
+        address_type: super::AddressType,
+        action: super::Action,
     }
 
     /// Device Removed Event
     ///
     /// see [bluez
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
-    #[derive(Debug, Clone, Unpack)]
+    #[derive(Debug, Clone, Unpack, Getters)]
     #[event(0x001B)]
+    #[getset(get = "pub")]
     pub struct DeviceRemoved {
-        pub address: super::Address,
-        pub address_type: super::AddressType,
+        address: super::Address,
+        address_type: super::AddressType,
     }
 
     /// New Connection Parameter Event
     ///
     /// see [bluez
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
-    #[derive(Debug, Clone, Unpack)]
+    #[derive(Debug, Clone, Unpack, Getters)]
     #[event(0x001C)]
+    #[getset(get = "pub")]
     pub struct NewConnectionParameter {
-        pub address: super::Address,
-        pub address_type: super::AddressType,
-        pub min_connection_interval: u16,
-        pub max_connection_interval: u16,
-        pub connection_latency: u16,
-        pub supervision_timeout: u16,
+        address: super::Address,
+        address_type: super::AddressType,
+        min_connection_interval: u16,
+        max_connection_interval: u16,
+        connection_latency: u16,
+        supervision_timeout: u16,
     }
 
     /// Unconfigured Index Added Event
@@ -354,33 +376,36 @@ mod imp {
     ///
     /// see [bluez
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
-    #[derive(Debug, Clone, Unpack)]
+    #[derive(Debug, Clone, Unpack, Getters)]
     #[event(0x0020)]
+    #[getset(get = "pub")]
     pub struct ExtendedIndexAdded {
-        pub controller_type: super::ControllerType,
-        pub controller_bus: super::ControllerBus,
+        controller_type: super::ControllerType,
+        controller_bus: super::ControllerBus,
     }
 
     /// Extended Index Removed Event
     ///
     /// see [bluez
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
-    #[derive(Debug, Clone, Unpack)]
+    #[derive(Debug, Clone, Unpack, Getters)]
     #[event(0x0021)]
+    #[getset(get = "pub")]
     pub struct ExtendedIndexRemoved {
-        pub controller_type: super::ControllerType,
-        pub controller_bus: super::ControllerBus,
+        controller_type: super::ControllerType,
+        controller_bus: super::ControllerBus,
     }
 
     /// Local Out Of Band Extended Data Updated Event
     ///
     /// see [bluez
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
-    #[derive(Debug, Clone, Unpack)]
+    #[derive(Debug, Clone, Unpack, Getters)]
     #[event(0x0022)]
+    #[getset(get = "pub")]
     pub struct LocalOutOfBandExtendedDataUpdate {
-        pub address_type: super::AddressTypes,
-        pub eir_data: super::VariableLengthBytes,
+        address_type: super::AddressTypes,
+        eir_data: super::VariableLengthBytes,
     }
 
     /// Advertising Added Event
@@ -419,11 +444,12 @@ mod imp {
     ///
     /// see [bluez
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
-    #[derive(Debug, Clone, Unpack)]
+    #[derive(Debug, Clone, Unpack, Getters)]
     #[event(0x0027)]
+    #[getset(get = "pub")]
     pub struct ExperimentalFeatureChanged {
-        pub uuid: super::Uuid,
-        pub flags: super::FeatureFlags,
+        uuid: super::Uuid,
+        flags: super::FeatureFlags,
     }
 
     /// Default System Configuration Changed Event
@@ -446,13 +472,14 @@ mod imp {
     ///
     /// see [bluez
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
-    #[derive(Debug, Clone, Unpack)]
+    #[derive(Debug, Clone, Unpack, Getters)]
     #[event(0x002A)]
+    #[getset(get = "pub")]
     pub struct DeviceFlagsChanged {
-        pub address: super::Address,
-        pub address_type: super::AddressType,
-        pub supported_flags: super::DeviceFlags,
-        pub current_flags: super::DeviceFlags,
+        address: super::Address,
+        address_type: super::AddressType,
+        supported_flags: super::DeviceFlags,
+        current_flags: super::DeviceFlags,
     }
 
     /// Advertisement Monitor Added Event
@@ -483,12 +510,13 @@ mod imp {
     ///
     /// see [bluez
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
-    #[derive(Debug, Clone, Unpack)]
+    #[derive(Debug, Clone, Unpack, Getters)]
     #[event(0x002E)]
+    #[getset(get = "pub")]
     pub struct ControllerResume {
-        pub wake_reason: super::WakeReason,
-        pub address: super::Address,
-        pub address_type: super::AddressType,
+        wake_reason: super::WakeReason,
+        address: super::Address,
+        address_type: super::AddressType,
     }
 
 }

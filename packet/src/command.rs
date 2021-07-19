@@ -94,8 +94,8 @@ mod imp {
     #[derive(Debug, Pack, New)]
     #[command(code = 0x0006, reply = SetDiscoverableReply)]
     pub struct SetDiscoverable {
-        pub discoverable: super::Discoverable,
-        pub timeout: u16,
+        discoverable: super::Discoverable,
+        timeout: u16,
     }
 
     /// Reply for [`SetDiscoverable`]
@@ -251,11 +251,11 @@ mod imp {
     ///
     /// see [bluez
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
-    #[derive(Debug, Pack)]
+    #[derive(Debug, Pack, New)]
     #[command(code = 0x0012, reply = LoadLinkKeysReply)]
     pub struct LoadLinkKeys {
-        pub debug_keys: bool,
-        pub keys: Vec<super::LinkKey>,
+        debug_keys: bool,
+        keys: Vec<super::LinkKey>,
     }
 
     /// Reply for [`LoadLinkKeys`]
@@ -309,45 +309,47 @@ mod imp {
     ///
     /// see [bluez
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
-    #[derive(Debug, Pack)]
+    #[derive(Debug, Pack, New)]
     #[command(code = 0x0016, reply = PinCodeReplyReply)]
     pub struct PinCodeReply {
-        pub address: super::Address,
-        pub address_type: super::AddressType,
-        pub pin_length: u8,
-        pub pin_code: [u8; 16],
+        address: super::Address,
+        address_type: super::AddressType,
+        pin_length: u8,
+        pin_code: [u8; 16],
     }
 
     /// Reply for [`PinCodeReply`]
-    #[derive(Debug, Unpack)]
+    #[derive(Debug, Unpack, Getters)]
+    #[getset(get = "pub")]
     pub struct PinCodeReplyReply {
-        pub address: super::Address,
-        pub address_type: super::AddressType,
+        address: super::Address,
+        address_type: super::AddressType,
     }
 
     /// PIN Code Negative Reply Command
     ///
     /// see [bluez
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
-    #[derive(Debug, Pack)]
+    #[derive(Debug, Pack, New)]
     #[command(code = 0x0017, reply = PinCodeNegativeReplyReply)]
     pub struct PinCodeNegativeReply {
-        pub address: super::Address,
-        pub address_type: super::AddressType,
+        address: super::Address,
+        address_type: super::AddressType,
     }
 
     /// Reply for [`PinCodeNegativeReply`]
-    #[derive(Debug, Unpack)]
+    #[derive(Debug, Unpack, Getters)]
+    #[getset(get = "pub")]
     pub struct PinCodeNegativeReplyReply {
-        pub address: super::Address,
-        pub address_type: super::AddressType,
+        address: super::Address,
+        address_type: super::AddressType,
     }
 
     /// Set IO Capability Command
     ///
     /// see [bluez
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
-    #[derive(Debug, Pack, Newtype)]
+    #[derive(Debug, Pack, Newtype, New)]
     #[command(code = 0x0018, reply = SetIoCapabilityReply)]
     pub struct SetIoCapability(super::IoCapability);
 
@@ -418,73 +420,77 @@ mod imp {
     ///
     /// see [bluez
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
-    #[derive(Debug, Pack)]
+    #[derive(Debug, Pack, New)]
     #[command(code = 0x001C, reply = UserConfirmationReplyReply)]
     pub struct UserConfirmationReply {
-        pub address: super::Address,
-        pub address_type: super::AddressType,
+        address: super::Address,
+        address_type: super::AddressType,
     }
 
     /// Reply for [`UserConfirmationReply`]
-    #[derive(Debug, Unpack)]
+    #[derive(Debug, Unpack, Getters)]
+    #[getset(get = "pub")]
     pub struct UserConfirmationReplyReply {
-        pub address: super::Address,
-        pub address_type: super::AddressType,
+        address: super::Address,
+        address_type: super::AddressType,
     }
 
     /// User Confirmation Negative Reply Command
     ///
     /// see [bluez
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
-    #[derive(Debug, Pack)]
+    #[derive(Debug, Pack, New)]
     #[command(code = 0x001D, reply = UserConfirmationNegativeReplyReply)]
     pub struct UserConfirmationNegativeReply {
-        pub address: super::Address,
-        pub address_type: super::AddressType,
+        address: super::Address,
+        address_type: super::AddressType,
     }
 
     /// Reply for [`UserConfirmationNegativeReply`]
-    #[derive(Debug, Unpack)]
+    #[derive(Debug, Unpack, Getters)]
+    #[getset(get = "pub")]
     pub struct UserConfirmationNegativeReplyReply {
-        pub address: super::Address,
-        pub address_type: super::AddressType,
+        address: super::Address,
+        address_type: super::AddressType,
     }
 
     /// User Passkey Reply Command
     ///
     /// see [bluez
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
-    #[derive(Debug, Pack)]
+    #[derive(Debug, Pack, New)]
     #[command(code = 0x001E, reply = UserPasskeyReplyReply)]
     pub struct UserPasskeyReply {
-        pub address: super::Address,
-        pub address_type: super::AddressType,
-        pub passkey: u32,
+        address: super::Address,
+        address_type: super::AddressType,
+        passkey: u32,
     }
 
     /// Reply for [`UserPasskeyReply`]
-    #[derive(Debug, Unpack)]
+    #[derive(Debug, Unpack, Getters)]
+    #[getset(get = "pub")]
     pub struct UserPasskeyReplyReply {
-        pub address: super::Address,
-        pub address_type: super::AddressType,
+        address: super::Address,
+        address_type: super::AddressType,
     }
 
     /// User Passkey Negative Reply Command
     ///
     /// see [bluez
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
-    #[derive(Debug, Pack)]
+    #[derive(Debug, Pack, New)]
     #[command(code = 0x001F, reply = UserPasskeyNegativeReplyReply)]
     pub struct UserPasskeyNegativeReply {
-        pub address: super::Address,
-        pub address_type: super::AddressType,
+        address: super::Address,
+        address_type: super::AddressType,
     }
 
     /// Reply for [`UserPasskeyNegativeReply`]
-    #[derive(Debug, Unpack)]
+    #[derive(Debug, Unpack, Getters)]
+    #[getset(get = "pub")]
     pub struct UserPasskeyNegativeReplyReply {
-        pub address: super::Address,
-        pub address_type: super::AddressType,
+        address: super::Address,
+        address_type: super::AddressType,
     }
 
     /// Read Local Out Of Band Data Command
@@ -496,12 +502,13 @@ mod imp {
     pub struct ReadLocalOutOfBandData;
 
     /// Reply for [`ReadLocalOutOfBandData`]
-    #[derive(Debug, Unpack)]
+    #[derive(Debug, Unpack, Getters)]
+    #[getset(get = "pub")]
     pub struct ReadLocalOutOfBandDataReply {
-        pub hash192: [u8; 16],
-        pub randomizer192: [u8; 16],
-        pub hash256: Option<[u8; 16]>,
-        pub randomizer256: Option<[u8; 16]>,
+        hash192: [u8; 16],
+        randomizer192: [u8; 16],
+        hash256: Option<[u8; 16]>,
+        randomizer256: Option<[u8; 16]>,
     }
 
     /// Add Remote Out Of Band Data Command
@@ -574,19 +581,20 @@ mod imp {
     ///
     /// see [bluez
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
-    #[derive(Debug, Pack)]
+    #[derive(Debug, Pack, New)]
     #[command(code = 0x0025, reply = ConfirmNameReply)]
     pub struct ConfirmName {
-        pub address: super::Address,
-        pub address_type: super::AddressType,
-        pub name_known: bool,
+        address: super::Address,
+        address_type: super::AddressType,
+        name_known: bool,
     }
 
     /// Reply for [`ConfirmName`]
-    #[derive(Debug, Unpack)]
+    #[derive(Debug, Unpack, Getters)]
+    #[getset(get = "pub")]
     pub struct ConfirmNameReply {
-        pub address: super::Address,
-        pub address_type: super::AddressType,
+        address: super::Address,
+        address_type: super::AddressType,
     }
 
     /// Block Device Command
@@ -672,7 +680,7 @@ mod imp {
     ///
     /// see [bluez
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
-    #[derive(Debug, Pack, Newtype)]
+    #[derive(Debug, Pack, Newtype, New)]
     #[command(code = 0x002B, reply = SetStaticAddressReply)]
     pub struct SetStaticAddress(super::Address);
 
@@ -684,11 +692,11 @@ mod imp {
     ///
     /// see [bluez
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
-    #[derive(Debug, Pack)]
+    #[derive(Debug, Pack, New)]
     #[command(code = 0x002C, reply = SetScanParametersReply)]
     pub struct SetScanParameters {
-        pub interval: u16,
-        pub window: u16,
+        interval: u16,
+        window: u16,
     }
 
     /// Reply for [`SetScanParameters`]
@@ -711,7 +719,7 @@ mod imp {
     ///
     /// see [bluez
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
-    #[derive(Debug, Pack, Newtype)]
+    #[derive(Debug, Pack, Newtype, New)]
     #[command(code = 0x002E, reply = SetDebugKeysReply)]
     pub struct SetDebugKeys(super::DebugKeys);
 
@@ -723,11 +731,11 @@ mod imp {
     ///
     /// see [bluez
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
-    #[derive(Debug, Pack)]
+    #[derive(Debug, Pack, New)]
     #[command(code = 0x002F, reply = SetPrivacyReply)]
     pub struct SetPrivacy {
-        pub privacy: super::Privacy,
-        pub identity_resolving_key: [u8; 16],
+        privacy: super::Privacy,
+        identity_resolving_key: [u8; 16],
     }
 
     /// Reply for [`SetPrivacy`]
@@ -750,42 +758,44 @@ mod imp {
     ///
     /// see [bluez
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
-    #[derive(Debug, Pack)]
+    #[derive(Debug, Pack, New)]
     #[command(code = 0x0031, reply = GetConnectionInformationReply)]
     pub struct GetConnectionInformation {
-        pub address: super::Address,
-        pub address_type: super::AddressType,
+        address: super::Address,
+        address_type: super::AddressType,
     }
 
     /// Reply for [`GetConnectionInformation`]
-    #[derive(Debug, Unpack)]
+    #[derive(Debug, Unpack, Getters)]
+    #[getset(get = "pub")]
     pub struct GetConnectionInformationReply {
-        pub address: super::Address,
-        pub address_type: super::AddressType,
-        pub rssi: u8,
-        pub tx_power: u8,
-        pub max_tx_power: u8,
+        address: super::Address,
+        address_type: super::AddressType,
+        rssi: u8,
+        tx_power: u8,
+        max_tx_power: u8,
     }
 
     /// Get Clock Information Command
     ///
     /// see [bluez
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
-    #[derive(Debug, Pack)]
+    #[derive(Debug, Pack, New)]
     #[command(code = 0x0032, reply = GetClockInformationReply)]
     pub struct GetClockInformation {
-        pub address: super::Address,
-        pub address_type: super::AddressType,
+        address: super::Address,
+        address_type: super::AddressType,
     }
 
     /// Reply for [`GetClockInformation`]
-    #[derive(Debug, Unpack)]
+    #[derive(Debug, Unpack, Getters)]
+    #[getset(get = "pub")]
     pub struct GetClockInformationReply {
-        pub address: super::Address,
-        pub address_type: super::AddressType,
-        pub local_clock: u32,
-        pub piconet_clock: u32,
-        pub accuracy: u16,
+        address: super::Address,
+        address_type: super::AddressType,
+        local_clock: u32,
+        piconet_clock: u32,
+        accuracy: u16,
     }
 
     /// Add Device Command
@@ -860,18 +870,19 @@ mod imp {
     pub struct ReadControllerConfigurationInformation;
 
     /// Reply for [`ReadControllerConfigurationInformation`]
-    #[derive(Debug, Unpack)]
+    #[derive(Debug, Unpack, Getters)]
+    #[getset(get = "pub")]
     pub struct ReadControllerConfigurationInformationReply {
-        pub manufacture: u16,
-        pub supported_options: super::ControllerConfigurationOption,
-        pub missing_options: super::ControllerConfigurationOption,
+        manufacture: u16,
+        supported_options: super::ControllerConfigurationOption,
+        missing_options: super::ControllerConfigurationOption,
     }
 
     /// Set External Configuration Command
     ///
     /// see [bluez
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
-    #[derive(Debug, Pack, Newtype)]
+    #[derive(Debug, Pack, Newtype, New)]
     #[command(code = 0x0038, reply = SetExternalConfigurationReply)]
     pub struct SetExternalConfiguration(bool);
 
@@ -883,7 +894,7 @@ mod imp {
     ///
     /// see [bluez
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
-    #[derive(Debug, Pack, Newtype)]
+    #[derive(Debug, Pack, Newtype, New)]
     #[command(code = 0x0039, reply = SetPublicAddressReply)]
     pub struct SetPublicAddress(super::Address);
 
@@ -988,20 +999,21 @@ mod imp {
     ///
     /// see [bluez
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
-    #[derive(Debug, Pack)]
+    #[derive(Debug, Pack, New)]
     #[command(code = 0x0040, reply = GetAdvertisingSizeInformationReply)]
     pub struct GetAdvertisingSizeInformation {
-        pub instance: super::AdvertiseInstance,
-        pub flags: super::AdvertisingFlag,
+        instance: super::AdvertiseInstance,
+        flags: super::AdvertisingFlag,
     }
 
     /// Reply for [`GetAdvertisingSizeInformation`]
-    #[derive(Debug, Unpack)]
+    #[derive(Debug, Unpack, Getters)]
+    #[getset(get = "pub")]
     pub struct GetAdvertisingSizeInformationReply {
-        pub instance: super::AdvertiseInstance,
-        pub flags: super::AdvertisingFlag,
-        pub max_adv_data_len: u8,
-        pub max_scan_resp_len: u8,
+        instance: super::AdvertiseInstance,
+        flags: super::AdvertisingFlag,
+        max_adv_data_len: u8,
+        max_scan_resp_len: u8,
     }
 
     /// Start Limited Discovery Command
@@ -1025,21 +1037,22 @@ mod imp {
     pub struct ReadExtendedControllerInformation;
 
     /// Reply for [`ReadExtendedControllerInformation`]
-    #[derive(Debug, Unpack)]
+    #[derive(Debug, Unpack, Getters)]
+    #[getset(get = "pub")]
     pub struct ReadExtendedControllerInformationReply {
-        pub address: super::Address,
-        pub bluetooth_version: u8,
-        pub manufacturer: u16,
-        pub supported_settings: super::Settings,
-        pub current_settings: super::Settings,
-        pub eir_data: super::VariableLengthBytes,
+        address: super::Address,
+        bluetooth_version: u8,
+        manufacturer: u16,
+        supported_settings: super::Settings,
+        current_settings: super::Settings,
+        eir_data: super::VariableLengthBytes,
     }
 
     /// Set Appearance Command
     ///
     /// see [bluez
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
-    #[derive(Debug, Pack, Newtype)]
+    #[derive(Debug, Pack, Newtype, New)]
     #[command(code = 0x0043, reply = SetApperanceReply)]
     pub struct SetApperance(u16);
 
@@ -1055,18 +1068,19 @@ mod imp {
     pub struct GetPhyConfiguration;
 
     /// Reply for [`GetPhyConfiguration`]
-    #[derive(Debug, Unpack)]
+    #[derive(Debug, Unpack, Getters)]
+    #[getset(get = "pub")]
     pub struct GetPhyConfigurationReply {
-        pub supported_phys: super::Phys,
-        pub configurable_phys: super::Phys,
-        pub selected_phys: super::Phys,
+        supported_phys: super::Phys,
+        configurable_phys: super::Phys,
+        selected_phys: super::Phys,
     }
 
     /// Set PHY Configuration Command
     ///
     /// see [bluez
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
-    #[derive(Debug, Pack, Newtype)]
+    #[derive(Debug, Pack, Newtype, New)]
     #[command(code = 0x0045, reply = SetPhyConfigurationReply)]
     pub struct SetPhyConfiguration(super::Phys);
 
@@ -1090,7 +1104,7 @@ mod imp {
     ///
     /// see [bluez
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
-    #[derive(Debug, Pack, Newtype)]
+    #[derive(Debug, Pack, Newtype, New)]
     #[command(code = 0x0047, reply = SetWidbandSpeechReply)]
     pub struct SetWidbandSpeech(bool);
 
@@ -1126,18 +1140,19 @@ mod imp {
     ///
     /// see [bluez
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
-    #[derive(Debug, Pack)]
+    #[derive(Debug, Pack, New)]
     #[command(code = 0x004A, reply = SetExperimentalFeatureReply)]
     pub struct SetExperimentalFeature {
-        pub uuid: super::Uuid,
-        pub action: super::FeatureAction,
+        uuid: super::Uuid,
+        action: super::FeatureAction,
     }
 
     /// Reply for [`SetExperimentalFeature`]
-    #[derive(Debug, Unpack)]
+    #[derive(Debug, Unpack, Getters)]
+    #[getset(get = "pub")]
     pub struct SetExperimentalFeatureReply {
-        pub uuid: super::Uuid,
-        pub flags: super::FeatureFlags,
+        uuid: super::Uuid,
+        flags: super::FeatureFlags,
     }
 
     /// Read Default System Configuration Command
@@ -1192,39 +1207,41 @@ mod imp {
     ///
     /// see [bluez
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
-    #[derive(Debug, Pack)]
+    #[derive(Debug, Pack, New)]
     #[command(code = 0x004F, reply = GetDeviceFlagReply)]
     pub struct GetDeviceFlag {
-        pub addrss: super::Address,
-        pub address_type: super::AddressType,
+        addrss: super::Address,
+        address_type: super::AddressType,
     }
 
     /// Reply for [`GetDeviceFlag`]
-    #[derive(Debug, Unpack)]
+    #[derive(Debug, Unpack, Getters)]
+    #[getset(get = "pub")]
     pub struct GetDeviceFlagReply {
-        pub addrss: super::Address,
-        pub address_type: super::AddressType,
-        pub supported_flags: super::DeviceFlags,
-        pub current_flags: super::DeviceFlags,
+        addrss: super::Address,
+        address_type: super::AddressType,
+        supported_flags: super::DeviceFlags,
+        current_flags: super::DeviceFlags,
     }
 
     /// Set Device Flags Command
     ///
     /// see [bluez
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
-    #[derive(Debug, Pack)]
+    #[derive(Debug, Pack, New)]
     #[command(code = 0x0050, reply = SetDeviceFlagReply)]
     pub struct SetDeviceFlag {
-        pub addrss: super::Address,
-        pub address_type: super::AddressType,
-        pub current_flags: super::DeviceFlags,
+        addrss: super::Address,
+        address_type: super::AddressType,
+        current_flags: super::DeviceFlags,
     }
 
     /// Reply for [`SetDeviceFlag`]
-    #[derive(Debug, Unpack)]
+    #[derive(Debug, Unpack, Getters)]
+    #[getset(get = "pub")]
     pub struct SetDeviceFlagReply {
-        pub addrss: super::Address,
-        pub address_type: super::AddressType,
+        addrss: super::Address,
+        address_type: super::AddressType,
     }
 
     /// Read Advertisement Monitor Features Command
@@ -1236,13 +1253,14 @@ mod imp {
     pub struct ReadAdvertisementMonitorFeatures;
 
     /// Reply for [`ReadAdvertisementMonitorFeatures`]
-    #[derive(Debug, Unpack)]
+    #[derive(Debug, Unpack, Getters)]
+    #[getset(get = "pub")]
     pub struct ReadAdvertisementMonitorFeaturesReply {
-        pub supported_features: super::AdvertisementMonitorFeatures,
-        pub enabled_features: super::AdvertisementMonitorFeatures,
-        pub max_num_handle: u16,
-        pub max_num_pattern: u8,
-        pub handles: Vec<super::AdvertisementMonitorHandle>,
+        supported_features: super::AdvertisementMonitorFeatures,
+        enabled_features: super::AdvertisementMonitorFeatures,
+        max_num_handle: u16,
+        max_num_pattern: u8,
+        handles: Vec<super::AdvertisementMonitorHandle>,
     }
 
     /// Add Advertisement Patterns Monitor Command
