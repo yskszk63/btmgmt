@@ -92,13 +92,14 @@ impl AsyncRead for MgmtSocket {
 }
 
 impl AsyncWrite for MgmtSocket {
-    fn poll_write(self: Pin<&mut Self>, cx: &mut Context<'_>, buf: &[u8]) -> Poll<Result<usize, io::Error>> {
+    fn poll_write(self: Pin<&mut Self>, cx: &mut Context<'_>, buf: &[u8]) -> Poll<io::Result<usize>> {
         let mut guard = match self.inner.poll_write_ready(cx)? {
             Poll::Ready(guard) => guard,
             Poll::Pending => return Poll::Pending,
         };
         let result = guard.try_io(|fd| fd.get_ref().send(buf));
         match result {
+            Ok(Ok(0)) => Poll::Ready(Err(io::Error::new(io::ErrorKind::WriteZero, "write zero."))),
             Ok(Ok(n)) => Poll::Ready(Ok(n)),
             Ok(Err(err)) => Poll::Ready(Err(err)),
             Err(..) => Poll::Pending,

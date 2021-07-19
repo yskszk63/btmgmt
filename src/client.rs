@@ -331,7 +331,11 @@ impl Client {
         let expected_code = command.code();
 
         let mut tx = tx.lock().await;
-        tx.send((index.clone(), command)).await?;
+        match tx.send((index.clone(), command)).await {
+            Ok(..) => {}
+            Err(Error::Io(err)) if err.kind() == io::ErrorKind::WriteZero => {} // Will probably receive an error reply
+            Err(err) => return Err(err.into()),
+        }
 
         let result = rx.recv().await?.unwrap(); // TODO EOF
         if index != result.0 {
