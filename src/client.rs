@@ -32,6 +32,9 @@ pub enum Error {
 
     #[error("unexpected: {0}")]
     Unexpected(String),
+
+    #[error("unreaded content exists {0}")]
+    HasRemaining(usize),
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
@@ -40,6 +43,7 @@ struct EventStream<IO> {
     io: IO,
     rxbuf: BytesMut,
     txbuf: BytesMut,
+    txpendings: Vec<Waker>,
 }
 
 impl<IO> EventStream<IO> {
@@ -48,6 +52,7 @@ impl<IO> EventStream<IO> {
             io,
             rxbuf: BytesMut::new(),
             txbuf: BytesMut::new(),
+            txpendings: Default::default(),
         }
     }
 }
@@ -63,16 +68,17 @@ where
             io, ref mut rxbuf, ..
         } = self.get_mut();
 
+        rxbuf.clear();
         rxbuf.reserve(1024 * 8);
 
         let dst = rxbuf.chunk_mut();
         let dst = unsafe { &mut *(dst as *mut _ as *mut [MaybeUninit<u8>]) };
         let mut b = ReadBuf::uninit(dst);
-        if Poll::Pending == Pin::new(io).poll_read(cx, &mut b)? {
+        if Pin::new(io).poll_read(cx, &mut b)?.is_pending() {
             return Poll::Pending;
         };
         let n = b.filled().len();
-        if n == 0 && !rxbuf.has_remaining() {
+        if n == 0 {
             return Poll::Ready(None);
         }
         drop(b);
@@ -80,11 +86,13 @@ where
             rxbuf.advance_mut(n);
         }
 
-        // TODO partial read
         let mut reader = rxbuf.reader();
         let (index, event) = event::unpack_events(&mut reader)?;
-        *rxbuf = BytesMut::from(rxbuf.as_ref());
-        Poll::Ready(Some(Ok((index, event))))
+        if rxbuf.has_remaining() {
+            Poll::Ready(Some(Err(Error::HasRemaining(rxbuf.remaining()))))
+        } else {
+            Poll::Ready(Some(Ok((index, event))))
+        }
     }
 }
 
@@ -94,7 +102,12 @@ where
 {
     type Error = Error;
 
-    fn poll_ready(self: Pin<&mut Self>, _: &mut Context<'_>) -> Poll<Result<()>> {
+    fn poll_ready(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Result<()>> {
+        let Self { txbuf, txpendings, .. } = self.get_mut();
+        if txbuf.has_remaining() {
+            txpendings.push(cx.waker().clone());
+            return Poll::Pending;
+        }
         Poll::Ready(Ok(()))
     }
 
@@ -119,6 +132,14 @@ where
                     Poll::Pending => return Poll::Pending,
                 };
                 this.txbuf.advance(n);
+
+                if !this.txbuf.has_remaining() {
+                    this.txbuf.clear();
+                    for waker in this.txpendings.drain(..) {
+                        waker.wake();
+                    }
+                }
+
             } else {
                 if Pin::new(&mut this.io).poll_flush(cx).is_pending() {
                     return Poll::Pending;
@@ -422,28 +443,18 @@ impl Client {
 mod tests {
     use crate::command::CommandCode;
     use crate::packet::ErrorCode;
-    use std::array::IntoIter;
 
     use super::*;
     use futures::{SinkExt, StreamExt};
 
     #[tokio::test]
     async fn test_stream_recv() {
-        let packet = IntoIter::new([
-            0x01u8, 0x00, 0xFF, 0xFF, 0x06, 0x00, 0x01, 0x00, 0x00, 0x01, 0x13, 0x00,
-        ])
-        .chain([
-            0x01u8, 0x00, 0xFF, 0xFF, 0x06, 0x00, 0x01, 0x00, 0x00, 0x01, 0x13, 0x00,
-        ])
-        .chain([
-            0x01u8, 0x00, 0xFF, 0xFF, 0x06, 0x00, 0x01, 0x00, 0x00, 0x01, 0x13, 0x00,
-        ])
-        .collect::<Vec<_>>();
-        let mut stream = EventStream {
-            io: &packet[..],
-            rxbuf: BytesMut::with_capacity(32),
-            txbuf: BytesMut::with_capacity(32),
-        };
+        let stream = tokio_test::io::Builder::new()
+            .read(&[0x01, 0x00, 0xFF, 0xFF, 0x06, 0x00, 0x01, 0x00, 0x00, 0x01, 0x13, 0x00])
+            .read(&[0x01, 0x00, 0xFF, 0xFF, 0x06, 0x00, 0x01, 0x00, 0x00, 0x01, 0x13, 0x00])
+            .read(&[0x01, 0x00, 0xFF, 0xFF, 0x06, 0x00, 0x01, 0x00, 0x00, 0x01, 0x13, 0x00])
+            .build();
+        let mut stream = EventStream::new(stream);
 
         let mut n = 0usize;
         while let Some(r) = stream.next().await {
@@ -468,11 +479,7 @@ mod tests {
     async fn test_stream_send() {
         let io = <Vec<u8>>::new();
 
-        let mut stream = EventStream {
-            io,
-            rxbuf: BytesMut::default(),
-            txbuf: BytesMut::default(),
-        };
+        let mut stream = EventStream::new(io);
 
         let i = ControllerIndex::ControllerId(0);
         let c = command::SetPowered::from(true).into();
