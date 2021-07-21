@@ -1,6 +1,6 @@
 [package]
 name = "btmgmt"
-version = "0.2.1"
+version = "0.2.2"
 authors = ["yskszk63 <yskszk63@gmail.com>"]
 edition = "2018"
 description = "Linux Management API Client"
@@ -17,7 +17,7 @@ libc = "0.2"
 bytes = "1.0"
 thiserror = "1.0"
 log = "0.4"
-btmgmt-packet = { path = "packet", version = "0.2.1" }
+btmgmt-packet = { path = "packet", version = "0.2.2" }
 
 [dev-dependencies]
 tokio = { version = "1.8", features = ["rt", "macros"] }
