@@ -16,6 +16,7 @@ fn main() {
     let v = Bitflags::A | Bitflags::B;
     v.pack(&mut b).unwrap();
     assert_eq!(b, &[0x01, 0x00]);
+    assert_eq!(&v.bits().to_le_bytes()[..], &[0x01, 0x00]);
 
     let v2 = Bitflags::unpack(&mut &b[..]).unwrap();
     assert_eq!(v, v2);

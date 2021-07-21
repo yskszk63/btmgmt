@@ -295,24 +295,24 @@ impl Unpack for AddressTypes {
 bitflags! {
     #[derive(Pack, Unpack)]
     pub struct Settings: u32 {
-        const Powered = 0;
-        const Connectable = 1;
-        const FastConnectable = 2;
-        const Discoverable = 3;
-        const Bondable = 4;
-        const LinkLevelSecurity = 5;
-        const SecureSimplePairing = 6;
-        const BasicRateEnhancedDataRate = 7;
-        const HighSpeed = 8;
-        const LowEnergy = 9;
-        const Advertising = 10;
-        const SecureConnections = 11;
-        const DebugKeys = 12;
-        const Privacy = 13;
-        const ControllerConfiguration = 14;
-        const StaticAddress = 15;
-        const PhyConfiguration = 16;
-        const WidebandSpeech = 17;
+        const Powered = 1 << 0;
+        const Connectable = 1 << 1;
+        const FastConnectable = 1 << 2;
+        const Discoverable = 1 << 3;
+        const Bondable = 1 << 4;
+        const LinkLevelSecurity = 1 << 5;
+        const SecureSimplePairing = 1 << 6;
+        const BasicRateEnhancedDataRate = 1 << 7;
+        const HighSpeed = 1 << 8;
+        const LowEnergy = 1 << 9;
+        const Advertising = 1 << 10;
+        const SecureConnections = 1 << 11;
+        const DebugKeys = 1 << 12;
+        const Privacy = 1 << 13;
+        const ControllerConfiguration = 1 << 14;
+        const StaticAddress = 1 << 15;
+        const PhyConfiguration = 1 << 16;
+        const WidebandSpeech = 1 << 17;
     }
 }
 
@@ -548,8 +548,8 @@ pub struct ConnectionParameter {
 bitflags! {
     #[derive(Pack, Unpack)]
     pub struct ControllerConfigurationOption: u32 {
-        const ExternalConfiguration = 0;
-        const BluetoothPublicAddressConfiguration = 1;
+        const ExternalConfiguration = 1 << 0;
+        const BluetoothPublicAddressConfiguration = 1 << 1;
     }
 }
 
@@ -681,16 +681,16 @@ pub enum ControllerBus {
 bitflags! {
     #[derive(Pack, Unpack)]
     pub struct AdvertisingFlag: u32 {
-        const SwitchIntoConnectableMode = 0;
-        const AdvertiseAsDiscoverable = 1;
-        const AdvertiseAsLimitedDiscoverable = 2;
-        const AddFlagsFieldToAdvData = 3;
-        const AddTxPowerFieldToAdvData = 4;
-        const AddAppearanceFieldToScanResp = 5;
-        const AddLocalNameInScanResp = 6;
-        const SecondaryChannelWithLe1M = 7;
-        const SecondaryChannelWithLe2M = 8;
-        const SecondaryChannelWithLeCoded = 9;
+        const SwitchIntoConnectableMode = 1 << 0;
+        const AdvertiseAsDiscoverable = 1 << 1;
+        const AdvertiseAsLimitedDiscoverable = 1 << 2;
+        const AddFlagsFieldToAdvData = 1 << 3;
+        const AddTxPowerFieldToAdvData = 1 << 4;
+        const AddAppearanceFieldToScanResp = 1 << 5;
+        const AddLocalNameInScanResp = 1 << 6;
+        const SecondaryChannelWithLe1M = 1 << 7;
+        const SecondaryChannelWithLe2M = 1 << 8;
+        const SecondaryChannelWithLeCoded = 1 << 9;
     }
 }
 
@@ -800,21 +800,21 @@ where
 bitflags! {
     #[derive(Pack, Unpack)]
     pub struct Phys: u32 {
-        const Br1M1Slot = 0;
-        const Br1M3Slot = 1;
-        const Br1M5Slot = 2;
-        const Edr2M1Slot = 3;
-        const Edr2M3Slot = 4;
-        const Edr2M5Slot = 5;
-        const Edr3M1Slot = 6;
-        const Edr3M3Slot = 7;
-        const Edr3M5Slot = 8;
-        const Le1MTx = 9;
-        const Le1MRx = 10;
-        const Le2MTx = 11;
-        const Le2MRx = 12;
-        const LeCodedTx = 13;
-        const LeCodedRx = 14;
+        const Br1M1Slot = 1 << 0;
+        const Br1M3Slot = 1 << 1;
+        const Br1M5Slot = 1 << 2;
+        const Edr2M1Slot = 1 << 3;
+        const Edr2M3Slot = 1 << 4;
+        const Edr2M5Slot = 1 << 5;
+        const Edr3M1Slot = 1 << 6;
+        const Edr3M3Slot = 1 << 7;
+        const Edr3M5Slot = 1 << 8;
+        const Le1MTx = 1 << 9;
+        const Le1MRx = 1 << 10;
+        const Le2MTx = 1 << 11;
+        const Le2MRx = 1 << 12;
+        const LeCodedTx = 1 << 13;
+        const LeCodedRx = 1 << 14;
     }
 }
 
@@ -836,8 +836,8 @@ pub struct BlockedKey {
 bitflags! {
     #[derive(Pack, Unpack)]
     pub struct FeatureFlags: u32 {
-        const FeatureActive = 0;
-        const CauseChangeInSupportedSettings = 1;
+        const FeatureActive = 1 << 0;
+        const CauseChangeInSupportedSettings = 1 << 1;
     }
 }
 
@@ -990,14 +990,14 @@ where
 bitflags! {
     #[derive(Pack, Unpack)]
     pub struct DeviceFlags: u32 {
-        const RemoteWakeupEnabled = 0;
+        const RemoteWakeupEnabled = 1 << 0;
     }
 }
 
 bitflags! {
     #[derive(Pack, Unpack)]
     pub struct AdvertisementMonitorFeatures: u32 {
-        const AdvertisementContentMonitoringBasedOnPatternsWithLogicalOr = 0;
+        const AdvertisementContentMonitoringBasedOnPatternsWithLogicalOr = 1 << 0;
     }
 }
 
@@ -1035,9 +1035,9 @@ impl AdvertisementPattern {
 bitflags! {
     #[derive(Pack, Unpack)]
     pub struct DeviceConnectFlags: u32 {
-        const ConfirmName = 0;
-        const LegacyPairing = 1;
-        const NotConnectable = 2;
+        const ConfirmName = 1 << 0;
+        const LegacyPairing = 1 << 1;
+        const NotConnectable = 1 << 2;
     }
 }
 
