@@ -5,7 +5,6 @@ use std::pin::Pin;
 use std::sync::Arc;
 use std::task::{Context, Poll, Waker};
 
-use bytes::{Buf, BufMut, BytesMut};
 use futures::channel::mpsc;
 use futures::lock::Mutex;
 use futures::stream::{SplitSink, SplitStream};
@@ -41,8 +40,7 @@ pub type Result<T> = std::result::Result<T, Error>;
 
 struct EventStream<IO> {
     io: IO,
-    rxbuf: BytesMut,
-    txbuf: BytesMut,
+    txbuf: Vec<u8>,
     txpendings: Vec<Waker>,
 }
 
@@ -50,8 +48,7 @@ impl<IO> EventStream<IO> {
     fn new(io: IO) -> Self {
         Self {
             io,
-            rxbuf: BytesMut::new(),
-            txbuf: BytesMut::new(),
+            txbuf: vec![],
             txpendings: Default::default(),
         }
     }
@@ -64,16 +61,10 @@ where
     type Item = Result<(ControllerIndex, Event)>;
 
     fn poll_next(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Option<Self::Item>> {
-        let Self {
-            io, ref mut rxbuf, ..
-        } = self.get_mut();
+        let Self { io, .. } = self.get_mut();
 
-        rxbuf.clear();
-        rxbuf.reserve(1024 * 8);
-
-        let dst = rxbuf.chunk_mut();
-        let dst = unsafe { &mut *(dst as *mut _ as *mut [MaybeUninit<u8>]) };
-        let mut b = ReadBuf::uninit(dst);
+        let mut rxbuf = [MaybeUninit::uninit(); 1024 * 8]; // TODO reasonable capacity
+        let mut b = ReadBuf::uninit(&mut rxbuf);
         if Pin::new(io).poll_read(cx, &mut b)?.is_pending() {
             return Poll::Pending;
         };
@@ -81,15 +72,11 @@ where
         if n == 0 {
             return Poll::Ready(None);
         }
-        drop(b);
-        unsafe {
-            rxbuf.advance_mut(n);
-        }
 
-        let mut reader = rxbuf.reader();
+        let mut reader = b.filled();
         let (index, event) = event::unpack_events(&mut reader)?;
-        if rxbuf.has_remaining() {
-            Poll::Ready(Some(Err(Error::HasRemaining(rxbuf.remaining()))))
+        if !reader.is_empty() {
+            Poll::Ready(Some(Err(Error::HasRemaining(rxbuf.len()))))
         } else {
             Poll::Ready(Some(Ok((index, event))))
         }
@@ -103,8 +90,10 @@ where
     type Error = Error;
 
     fn poll_ready(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Result<()>> {
-        let Self { txbuf, txpendings, .. } = self.get_mut();
-        if txbuf.has_remaining() {
+        let Self {
+            txbuf, txpendings, ..
+        } = self.get_mut();
+        if !txbuf.is_empty() {
             txpendings.push(cx.waker().clone());
             return Poll::Pending;
         }
@@ -117,8 +106,7 @@ where
     ) -> Result<()> {
         let Self { txbuf, .. } = self.get_mut();
 
-        let mut write = txbuf.writer();
-        command::pack_command(&index, &commands, &mut write)?;
+        command::pack_command(&index, &commands, txbuf)?;
         Ok(())
     }
 
@@ -126,20 +114,18 @@ where
         let this = self.get_mut();
 
         loop {
-            if this.txbuf.has_remaining() {
+            if !this.txbuf.is_empty() {
                 let n = match Pin::new(&mut this.io).poll_write(cx, &this.txbuf)? {
                     Poll::Ready(n) => n,
                     Poll::Pending => return Poll::Pending,
                 };
-                this.txbuf.advance(n);
+                this.txbuf = (&this.txbuf[n..]).into();
 
-                if !this.txbuf.has_remaining() {
-                    this.txbuf.clear();
+                if this.txbuf.is_empty() {
                     for waker in this.txpendings.drain(..) {
                         waker.wake();
                     }
                 }
-
             } else {
                 if Pin::new(&mut this.io).poll_flush(cx).is_pending() {
                     return Poll::Pending;
@@ -312,13 +298,15 @@ where
     }
 }
 
-/// mgmt API Event subscription.
-pub struct EventSubscribe {
-    receive: Receive<SplitStream<EventStream<MgmtSocket>>>,
+struct EventSubscribeInner<S> {
+    receive: Receive<SplitStream<EventStream<S>>>,
     rx: mpsc::UnboundedReceiver<(ControllerIndex, Event)>,
 }
 
-impl Stream for EventSubscribe {
+impl<S> Stream for EventSubscribeInner<S>
+where
+    S: AsyncRead + Unpin,
+{
     type Item = (ControllerIndex, Event);
 
     fn poll_next(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Option<Self::Item>> {
@@ -338,30 +326,30 @@ impl Stream for EventSubscribe {
     }
 }
 
-type ClientTx = Arc<Mutex<SplitSink<EventStream<MgmtSocket>, (ControllerIndex, Command)>>>;
+type ClientTx<S> = Arc<Mutex<SplitSink<EventStream<S>, (ControllerIndex, Command)>>>;
 
-/// mgmt API Client.
-pub struct Client {
-    rx: Receive<SplitStream<EventStream<MgmtSocket>>>,
-    tx: ClientTx,
+pub struct ClientInner<S> {
+    rx: Receive<SplitStream<EventStream<S>>>,
+    tx: ClientTx<S>,
 }
 
-impl Client {
-    /// Open client.
-    pub fn open() -> Result<Self> {
-        let sock = MgmtSocket::new()?;
+impl<S> ClientInner<S>
+where
+    S: AsyncRead + AsyncWrite + Unpin + 'static,
+{
+    fn new(sock: S) -> Self {
         let stream = EventStream::new(sock);
         let (tx, rx) = stream.split();
-        Ok(Self {
+        Self {
             rx: Receive::new(rx),
             tx: Arc::new(Mutex::new(tx)),
-        })
+        }
     }
 
     /// Subscribe mgmt API events.
-    pub async fn events(&self) -> EventSubscribe {
+    async fn events(&self) -> EventSubscribeInner<S> {
         let rx = self.rx.subscribe().await;
-        EventSubscribe {
+        EventSubscribeInner {
             receive: Receive(self.rx.0.clone()),
             rx,
         }
@@ -386,8 +374,8 @@ impl Client {
     async fn call_inner<C>(
         index: ControllerIndex,
         command: C,
-        rx: Receive<SplitStream<EventStream<MgmtSocket>>>,
-        tx: ClientTx,
+        rx: Receive<SplitStream<EventStream<S>>>,
+        tx: ClientTx<S>,
     ) -> Result<C::Reply>
     where
         C: command::CommandRequest,
@@ -439,6 +427,47 @@ impl Client {
     }
 }
 
+/// mgmt API Event subscription.
+pub struct EventSubscribe(EventSubscribeInner<MgmtSocket>);
+
+impl Stream for EventSubscribe {
+    type Item = (ControllerIndex, Event);
+
+    fn poll_next(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Option<Self::Item>> {
+        self.get_mut().0.poll_next_unpin(cx)
+    }
+}
+
+/// mgmt API Client.
+pub struct Client(ClientInner<MgmtSocket>);
+
+impl Client {
+    /// Open client.
+    pub fn open() -> Result<Self> {
+        let sock = MgmtSocket::new()?;
+        Ok(Self(ClientInner::new(sock)))
+    }
+
+    /// Subscribe mgmt API events.
+    pub async fn events(&self) -> EventSubscribe {
+        let inner = self.0.events().await;
+        EventSubscribe(inner)
+    }
+
+    /// Call mgmt API command.
+    pub fn call<C, I>(
+        &self,
+        index: I,
+        command: C,
+    ) -> impl Future<Output = Result<C::Reply>> + 'static
+    where
+        C: command::CommandRequest + 'static,
+        I: Into<ControllerIndex>,
+    {
+        self.0.call(index.into(), command)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use crate::command::CommandCode;
@@ -450,9 +479,15 @@ mod tests {
     #[tokio::test]
     async fn test_stream_recv() {
         let stream = tokio_test::io::Builder::new()
-            .read(&[0x01, 0x00, 0xFF, 0xFF, 0x06, 0x00, 0x01, 0x00, 0x00, 0x01, 0x13, 0x00])
-            .read(&[0x01, 0x00, 0xFF, 0xFF, 0x06, 0x00, 0x01, 0x00, 0x00, 0x01, 0x13, 0x00])
-            .read(&[0x01, 0x00, 0xFF, 0xFF, 0x06, 0x00, 0x01, 0x00, 0x00, 0x01, 0x13, 0x00])
+            .read(&[
+                0x01, 0x00, 0xFF, 0xFF, 0x06, 0x00, 0x01, 0x00, 0x00, 0x01, 0x13, 0x00,
+            ])
+            .read(&[
+                0x01, 0x00, 0xFF, 0xFF, 0x06, 0x00, 0x01, 0x00, 0x00, 0x01, 0x13, 0x00,
+            ])
+            .read(&[
+                0x01, 0x00, 0xFF, 0xFF, 0x06, 0x00, 0x01, 0x00, 0x00, 0x01, 0x13, 0x00,
+            ])
             .build();
         let mut stream = EventStream::new(stream);
 
@@ -484,5 +519,33 @@ mod tests {
         let i = ControllerIndex::ControllerId(0);
         let c = command::SetPowered::from(true).into();
         stream.send((i, c)).await.unwrap();
+    }
+
+    #[tokio::test]
+    async fn test_client_request() {
+        use btmgmt_packet as packet;
+
+        let stream = tokio_test::io::Builder::new()
+            .write(&[0x01, 0x00, 0xFF, 0xFF, 0x00, 0x00]) // read management version information
+            .read(&[
+                0x01, 0x00, 0xFF, 0xFF, 0x06, 0x00, 0x01, 0x00, 0x00, 0x01, 0x13, 0x00,
+            ]) // reply
+            .read(&[0x04, 0x00, 0x00, 0x00, 0x00, 0x00]) // index added
+            .build();
+        let client = ClientInner::new(stream);
+        let reply = client
+            .call(None, packet::command::ReadManagementVersionInformation)
+            .await
+            .unwrap();
+        assert_eq!(1, *reply.version());
+        assert_eq!(0x0013, *reply.revision());
+
+        let mut events = client.events().await;
+        let (idx, evt) = events.next().await.unwrap();
+        assert_eq!(packet::ControllerIndex::from(0), idx);
+        assert!(matches!(
+            evt,
+            packet::event::Event::IndexAdded(packet::event::IndexAdded)
+        ));
     }
 }

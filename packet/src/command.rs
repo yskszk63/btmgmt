@@ -1305,7 +1305,9 @@ pub fn pack_command<W>(
 where
     W: io::Write,
 {
-    let mut buf = vec![];
+    use smallvec::SmallVec;
+
+    let mut buf = SmallVec::<[u8; 64]>::new();
     command.pack_inner(&mut buf)?;
 
     command.code().pack(write)?;
