@@ -7,9 +7,9 @@ use std::task::{Context, Poll, Waker};
 
 use futures_channel::mpsc;
 use futures_core::stream::Stream;
-use futures_locks::Mutex;
 use futures_sink::Sink;
 use futures_util::future::FutureExt;
+use futures_util::lock::Mutex;
 use futures_util::sink::SinkExt;
 use futures_util::stream::{SplitSink, SplitStream, StreamExt};
 use tokio::io::{self, AsyncRead, AsyncWrite, ReadBuf};

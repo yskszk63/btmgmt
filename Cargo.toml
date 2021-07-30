@@ -13,9 +13,8 @@ resolver = "2"
 [dependencies]
 futures-core = { version = "0.3", default-features = false }
 futures-sink = { version = "0.3", default-features = false }
-futures-util = { version = "0.3", default-features = false }
-futures-channel = { version = "0.3", default-features = false }
-futures-locks = { version = "0.6", default-features = false }
+futures-util = { version = "0.3", default-features = false, features = ["std", "sink"] }
+futures-channel = { version = "0.3", default-features = false, features = ["std"] }
 tokio = { version = "1.8", features = ["net"] }
 socket2 = { version = "0.4", features = ["all"] }
 libc = "0.2"
