@@ -8,9 +8,14 @@ repository = "https://github.com/yskszk63/btmgmt"
 license = "MIT OR Apache-2.0"
 keywords = ["bluetooth"]
 readme = "README.md"
+resolver = "2"
 
 [dependencies]
-futures = "0.3"
+futures-core = { version = "0.3", default-features = false }
+futures-sink = { version = "0.3", default-features = false }
+futures-util = { version = "0.3", default-features = false }
+futures-channel = { version = "0.3", default-features = false }
+futures-locks = { version = "0.6", default-features = false }
 tokio = { version = "1.8", features = ["net"] }
 socket2 = { version = "0.4", features = ["all"] }
 libc = "0.2"
@@ -19,6 +24,7 @@ log = "0.4"
 btmgmt-packet = { path = "packet", version = "0.2.2" }
 
 [dev-dependencies]
+futures = "0.3"
 tokio = { version = "1.8", features = ["rt", "macros", "io-util"] }
 pretty_env_logger = "0.4"
 tokio-test = "0.4.2"

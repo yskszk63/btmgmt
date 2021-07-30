@@ -5,10 +5,13 @@ use std::pin::Pin;
 use std::sync::Arc;
 use std::task::{Context, Poll, Waker};
 
-use futures::channel::mpsc;
-use futures::lock::Mutex;
-use futures::stream::{SplitSink, SplitStream};
-use futures::{FutureExt, Sink, SinkExt, Stream, StreamExt};
+use futures_channel::mpsc;
+use futures_core::stream::Stream;
+use futures_locks::Mutex;
+use futures_sink::Sink;
+use futures_util::future::FutureExt;
+use futures_util::sink::SinkExt;
+use futures_util::stream::{SplitSink, SplitStream, StreamExt};
 use tokio::io::{self, AsyncRead, AsyncWrite, ReadBuf};
 
 use crate::command::{self, Command};
@@ -474,7 +477,6 @@ mod tests {
     use crate::packet::ErrorCode;
 
     use super::*;
-    use futures::{SinkExt, StreamExt};
 
     #[tokio::test]
     async fn test_stream_recv() {
