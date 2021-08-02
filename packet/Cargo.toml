@@ -1,6 +1,6 @@
 [package]
 name = "btmgmt-packet"
-version = "0.2.4"
+version = "0.2.5"
 authors = ["yskszk63 <yskszk63@gmail.com>"]
 edition = "2018"
 description = "btmgmt API packet structures."
@@ -11,7 +11,7 @@ keywords = ["bluetooth"]
 [dependencies]
 bdaddr = "0.1"
 thiserror = "1.0"
-btmgmt-packet-helper = { path = "helper", version = "0.2.4" }
+btmgmt-packet-helper = { path = "helper", version = "0.2.5" }
 bitflags = "1.2"
 uuid = "0.8"
 getset = "0.1"

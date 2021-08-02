@@ -1,6 +1,6 @@
 [package]
 name = "btmgmt-packet-helper"
-version = "0.2.4"
+version = "0.2.5"
 authors = ["yskszk63 <yskszk63@gmail.com>"]
 edition = "2018"
 autotests = false
@@ -15,7 +15,7 @@ path = "tests/all.rs"
 
 [dependencies]
 thiserror = "1.0"
-btmgmt-packet-macros = { path = "../macros", version = "0.2.4" }
+btmgmt-packet-macros = { path = "../macros", version = "0.2.5" }
 
 [dev-dependencies]
 bitflags = "1.2"
