@@ -1,4 +1,5 @@
 //! mgmt API client.
+use std::fmt;
 use std::future::Future;
 use std::mem::MaybeUninit;
 use std::pin::Pin;
@@ -78,6 +79,7 @@ where
 
         let mut reader = b.filled();
         let (index, event) = event::unpack_events(&mut reader)?;
+        log::trace!("RECV {:?} {:?}", index, event);
         if !reader.is_empty() {
             Poll::Ready(Some(Err(Error::HasRemaining(rxbuf.len()))))
         } else {
@@ -109,6 +111,7 @@ where
     ) -> Result<()> {
         let Self { txbuf, .. } = self.get_mut();
 
+        log::trace!("SEND {:?} {:?}", index, commands);
         command::pack_command(&index, &commands, txbuf)?;
         Ok(())
     }
@@ -366,6 +369,7 @@ where
     ) -> impl Future<Output = Result<C::Reply>> + 'static
     where
         C: command::CommandRequest + 'static,
+        C::Reply: fmt::Debug,
         I: Into<ControllerIndex>,
     {
         let rx = self.rx.clone();
@@ -382,6 +386,7 @@ where
     ) -> Result<C::Reply>
     where
         C: command::CommandRequest,
+        C::Reply: fmt::Debug,
     {
         let command = command.into();
         let expected_code = command.code();
@@ -414,6 +419,7 @@ where
                 }
                 let mut data = &comp.data()[..];
                 let result = C::Reply::unpack(&mut data)?;
+                log::trace!("REPLY {:?}", result);
                 Ok(result)
             }
             Event::CommandStatus(status) => {
@@ -465,6 +471,7 @@ impl Client {
     ) -> impl Future<Output = Result<C::Reply>> + 'static
     where
         C: command::CommandRequest + 'static,
+        C::Reply: fmt::Debug,
         I: Into<ControllerIndex>,
     {
         self.0.call(index.into(), command)

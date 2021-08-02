@@ -20,12 +20,12 @@ async fn main() {
         .call(None, ReadManagementVersionInformation)
         .await
         .unwrap();
-    dbg!(r);
+    println!("{:?}", r);
     let r = client
         .call(None, ReadManagementSupportedCommands)
         .await
         .unwrap();
-    dbg!(r);
+    println!("{:?}", r);
     let r = client.call(None, ReadControllerIndexList).await.unwrap();
     for index in r {
         let r = client
