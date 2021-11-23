@@ -118,12 +118,19 @@ mod imp {
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
     #[derive(Debug, Clone, Unpack, Getters)]
     #[event(0x000B)]
-    #[getset(get = "pub")]
     pub struct DeviceConnected {
         address: super::Address,
         address_type: super::AddressType,
+        #[getset(get = "pub")]
         flags: super::DeviceConnectFlags,
+        #[getset(get = "pub")]
         eir_data: super::VariableLengthBytes,
+    }
+
+    impl DeviceConnected {
+        pub fn address(&self) -> &crate::bdaddr::BdAddr {
+            &self.address.0
+        }
     }
 
     /// Device Disconnected Event
@@ -132,11 +139,17 @@ mod imp {
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
     #[derive(Debug, Clone, Unpack, Getters)]
     #[event(0x000C)]
-    #[getset(get = "pub")]
     pub struct DeviceDisconnect {
         address: super::Address,
         address_type: super::AddressType,
+        #[getset(get = "pub")]
         reason: super::DeviceDisconnectReason,
+    }
+
+    impl DeviceDisconnect {
+        pub fn address(&self) -> &crate::bdaddr::BdAddr {
+            &self.address.0
+        }
     }
 
     /// Connect Failed Event
@@ -145,11 +158,17 @@ mod imp {
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
     #[derive(Debug, Clone, Unpack, Getters)]
     #[event(0x000D)]
-    #[getset(get = "pub")]
     pub struct ConnectFailed {
         address: super::Address,
         address_type: super::AddressType,
+        #[getset(get = "pub")]
         status: super::ErrorCode,
+    }
+
+    impl ConnectFailed {
+        pub fn address(&self) -> &crate::bdaddr::BdAddr {
+            &self.address.0
+        }
     }
 
     /// PIN Code Request Event
@@ -158,11 +177,17 @@ mod imp {
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
     #[derive(Debug, Clone, Unpack, Getters)]
     #[event(0x000E)]
-    #[getset(get = "pub")]
     pub struct PinCodeRequest {
         address: super::Address,
         address_type: super::AddressType,
+        #[getset(get = "pub")]
         secure: bool,
+    }
+
+    impl PinCodeRequest {
+        pub fn address(&self) -> &crate::bdaddr::BdAddr {
+            &self.address.0
+        }
     }
 
     /// User Confirmation Request Event
@@ -171,24 +196,36 @@ mod imp {
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
     #[derive(Debug, Clone, Unpack, Getters)]
     #[event(0x000F)]
-    #[getset(get = "pub")]
     pub struct UserConfirmationRequest {
         address: super::Address,
         address_type: super::AddressType,
+        #[getset(get = "pub")]
         confirm_hint: super::ConfirmHint,
+        #[getset(get = "pub")]
         value: [u8; 4],
+    }
+
+    impl UserConfirmationRequest {
+        pub fn address(&self) -> &crate::bdaddr::BdAddr {
+            &self.address.0
+        }
     }
 
     /// User Passkey Request Event
     ///
     /// see [bluez
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
-    #[derive(Debug, Clone, Unpack, Getters)]
+    #[derive(Debug, Clone, Unpack)]
     #[event(0x0010)]
-    #[getset(get = "pub")]
     pub struct UserPasskeyRequest {
         address: super::Address,
         address_type: super::AddressType,
+    }
+
+    impl UserPasskeyRequest {
+        pub fn address(&self) -> &crate::bdaddr::BdAddr {
+            &self.address.0
+        }
     }
 
     /// Authentication Failed Event
@@ -197,11 +234,17 @@ mod imp {
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
     #[derive(Debug, Clone, Unpack, Getters)]
     #[event(0x0011)]
-    #[getset(get = "pub")]
     pub struct AuthenticationFailed {
         address: super::Address,
         address_type: super::AddressType,
+        #[getset(get = "pub")]
         status: super::ErrorCode,
+    }
+
+    impl AuthenticationFailed {
+        pub fn address(&self) -> &crate::bdaddr::BdAddr {
+            &self.address.0
+        }
     }
 
     /// Device Found Event
@@ -210,13 +253,21 @@ mod imp {
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
     #[derive(Debug, Clone, Unpack, Getters)]
     #[event(0x0012)]
-    #[getset(get = "pub")]
     pub struct DeviceFound {
         address: super::Address,
         address_type: super::AddressType,
+        #[getset(get = "pub")]
         rssi: u8,
+        #[getset(get = "pub")]
         flags: super::DeviceConnectFlags,
+        #[getset(get = "pub")]
         eir_data: super::VariableLengthBytes,
+    }
+
+    impl DeviceFound {
+        pub fn address(&self) -> &crate::bdaddr::BdAddr {
+            &self.address.0
+        }
     }
 
     /// Discovering Event
@@ -235,36 +286,51 @@ mod imp {
     ///
     /// see [bluez
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
-    #[derive(Debug, Clone, Unpack, Getters)]
+    #[derive(Debug, Clone, Unpack)]
     #[event(0x0014)]
-    #[getset(get = "pub")]
     pub struct DeviceBlocked {
         address: super::Address,
         address_type: super::AddressType,
+    }
+
+    impl DeviceBlocked {
+        pub fn address(&self) -> &crate::bdaddr::BdAddr {
+            &self.address.0
+        }
     }
 
     /// Device Unblocked Event
     ///
     /// see [bluez
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
-    #[derive(Debug, Clone, Unpack, Getters)]
+    #[derive(Debug, Clone, Unpack)]
     #[event(0x0015)]
-    #[getset(get = "pub")]
     pub struct DeviceUnblocked {
         address: super::Address,
         address_type: super::AddressType,
+    }
+
+    impl DeviceUnblocked {
+        pub fn address(&self) -> &crate::bdaddr::BdAddr {
+            &self.address.0
+        }
     }
 
     /// Device Unpaired Event
     ///
     /// see [bluez
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
-    #[derive(Debug, Clone, Unpack, Getters)]
+    #[derive(Debug, Clone, Unpack)]
     #[event(0x0016)]
-    #[getset(get = "pub")]
     pub struct DeviceUnpaired {
         address: super::Address,
         address_type: super::AddressType,
+    }
+
+    impl DeviceUnpaired {
+        pub fn address(&self) -> &crate::bdaddr::BdAddr {
+            &self.address.0
+        }
     }
 
     /// Passkey Notify Event
@@ -273,12 +339,19 @@ mod imp {
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
     #[derive(Debug, Clone, Unpack, Getters)]
     #[event(0x0017)]
-    #[getset(get = "pub")]
     pub struct PasskeyNotify {
         address: super::Address,
         address_type: super::AddressType,
+        #[getset(get = "pub")]
         passkey: u32,
+        #[getset(get = "pub")]
         entered: u8,
+    }
+
+    impl PasskeyNotify {
+        pub fn address(&self) -> &crate::bdaddr::BdAddr {
+            &self.address.0
+        }
     }
 
     /// New Identity Resolving Key Event
@@ -287,11 +360,18 @@ mod imp {
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
     #[derive(Debug, Clone, Unpack, Getters)]
     #[event(0x0018)]
-    #[getset(get = "pub")]
     pub struct NewIdentityResolvingKey {
+        #[getset(get = "pub")]
         store_hint: bool,
         random_address: super::Address,
+        #[getset(get = "pub")]
         key: super::IdentityResolvingKey,
+    }
+
+    impl NewIdentityResolvingKey {
+        pub fn address(&self) -> crate::bdaddr::Address {
+            self.random_address.0.clone().to_le_random_addr()
+        }
     }
 
     /// New Signature Resolving Key Event
@@ -312,23 +392,34 @@ mod imp {
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
     #[derive(Debug, Clone, Unpack, Getters)]
     #[event(0x001A)]
-    #[getset(get = "pub")]
     pub struct DeviceAdded {
         address: super::Address,
         address_type: super::AddressType,
+        #[getset(get = "pub")]
         action: super::Action,
+    }
+
+    impl DeviceAdded {
+        pub fn address(&self) -> &crate::bdaddr::BdAddr {
+            &self.address.0
+        }
     }
 
     /// Device Removed Event
     ///
     /// see [bluez
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
-    #[derive(Debug, Clone, Unpack, Getters)]
+    #[derive(Debug, Clone, Unpack)]
     #[event(0x001B)]
-    #[getset(get = "pub")]
     pub struct DeviceRemoved {
         address: super::Address,
         address_type: super::AddressType,
+    }
+
+    impl DeviceRemoved {
+        pub fn address(&self) -> &crate::bdaddr::BdAddr {
+            &self.address.0
+        }
     }
 
     /// New Connection Parameter Event
@@ -337,14 +428,23 @@ mod imp {
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
     #[derive(Debug, Clone, Unpack, Getters)]
     #[event(0x001C)]
-    #[getset(get = "pub")]
     pub struct NewConnectionParameter {
         address: super::Address,
         address_type: super::AddressType,
+        #[getset(get = "pub")]
         min_connection_interval: u16,
+        #[getset(get = "pub")]
         max_connection_interval: u16,
+        #[getset(get = "pub")]
         connection_latency: u16,
+        #[getset(get = "pub")]
         supervision_timeout: u16,
+    }
+
+    impl NewConnectionParameter {
+        pub fn address(&self) -> &crate::bdaddr::BdAddr {
+            &self.address.0
+        }
     }
 
     /// Unconfigured Index Added Event
@@ -477,12 +577,19 @@ mod imp {
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
     #[derive(Debug, Clone, Unpack, Getters)]
     #[event(0x002A)]
-    #[getset(get = "pub")]
     pub struct DeviceFlagsChanged {
         address: super::Address,
         address_type: super::AddressType,
+        #[getset(get = "pub")]
         supported_flags: super::DeviceFlags,
+        #[getset(get = "pub")]
         current_flags: super::DeviceFlags,
+    }
+
+    impl DeviceFlagsChanged {
+        pub fn address(&self) -> &crate::bdaddr::BdAddr {
+            &self.address.0
+        }
     }
 
     /// Advertisement Monitor Added Event
@@ -515,11 +622,17 @@ mod imp {
     /// docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
     #[derive(Debug, Clone, Unpack, Getters)]
     #[event(0x002E)]
-    #[getset(get = "pub")]
     pub struct ControllerResume {
+        #[getset(get = "pub")]
         wake_reason: super::WakeReason,
         address: super::Address,
         address_type: super::AddressType,
+    }
+
+    impl ControllerResume {
+        pub fn address(&self) -> &crate::bdaddr::BdAddr {
+            &self.address.0
+        }
     }
 }
 

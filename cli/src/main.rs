@@ -4,7 +4,7 @@ use btmgmt::client::Client;
 use btmgmt::command;
 use btmgmt::event::Event;
 use btmgmt::packet;
-use clap::Clap;
+use clap::{Parser, Subcommand};
 use futures::StreamExt;
 
 fn length(len: usize) -> impl FnMut(&str) -> Result<(), anyhow::Error> {
@@ -16,7 +16,7 @@ fn length(len: usize) -> impl FnMut(&str) -> Result<(), anyhow::Error> {
     }
 }
 
-#[derive(Debug, Clap)]
+#[derive(Debug, Parser)]
 struct Opt {
     #[clap(short, long, default_value = "0")]
     index: u16,
@@ -28,7 +28,7 @@ struct Opt {
     command: Option<Command>,
 }
 
-#[derive(Debug, Clap)]
+#[derive(Debug, Subcommand)]
 enum Command {
     Version,
 
@@ -86,7 +86,7 @@ enum Command {
 // TODO pair device / confirm / passkey
 // TODO oob
 
-#[derive(Debug, Clap)]
+#[derive(Debug, Subcommand)]
 enum ControllerCommand {
     Show,
 
@@ -143,10 +143,12 @@ enum ControllerCommand {
         minor: u8,
     },
 
+    /*
     Name {
         name: packet::Name,
         short_name: Option<packet::ShortName>,
     },
+    */
 
     Uuid {
         #[clap(subcommand)]
@@ -286,6 +288,7 @@ impl ControllerCommand {
                 println!("{}", &*reply);
             }
 
+            /* FIXME
             Self::Name { name, short_name } => {
                 let reply = client
                     .call(
@@ -301,6 +304,7 @@ impl ControllerCommand {
                 println!("{}", reply.name().to_string_lossy());
                 println!("{}", reply.short_name().to_string_lossy());
             }
+            */
 
             Self::Uuid { command } => match command {
                 UuidCommand::Add { val, svc_hint } => {
@@ -345,20 +349,20 @@ impl ControllerCommand {
     }
 }
 
-#[derive(Debug, Clap)]
+#[derive(Debug, Subcommand)]
 enum UuidCommand {
     Add { val: packet::Uuid, svc_hint: u8 },
 
     Remove { val: packet::Uuid },
 }
 
-#[derive(Debug, Clap)]
+#[derive(Debug, Subcommand)]
 enum KeyCommand {
     Link, // TODO
     Ltk,
 }
 
-#[derive(Debug, Clap)]
+#[derive(Debug, Subcommand)]
 enum ConnectionCommand {
     Ls,
 
@@ -402,7 +406,7 @@ impl ConnectionCommand {
     }
 }
 
-#[derive(Debug, Clap)]
+#[derive(Debug, Subcommand)]
 enum DiscoveryCommand {
     Start {
         #[clap(long, short)]
@@ -502,7 +506,7 @@ impl DiscoveryCommand {
     }
 }
 
-#[derive(Debug, Clap)]
+#[derive(Debug, Subcommand)]
 enum ConfigurationCommand {
     #[clap(aliases=&["sys"])]
     System {
@@ -526,7 +530,7 @@ impl ConfigurationCommand {
     }
 }
 
-#[derive(Debug, Clap)]
+#[derive(Debug, Subcommand)]
 enum SystemConfigurationCommand {
     Get,
 
@@ -576,7 +580,7 @@ impl SystemConfigurationCommand {
     }
 }
 
-#[derive(Debug, Clap)]
+#[derive(Debug, Subcommand)]
 enum RuntimeConfigurationCommand {
     Get,
 
@@ -584,6 +588,7 @@ enum RuntimeConfigurationCommand {
 }
 
 impl RuntimeConfigurationCommand {
+    #[allow(unreachable_code)]
     async fn proc(&self, client: &Client, index: u16) -> anyhow::Result<()> {
         match self {
             Self::Get => {
@@ -601,7 +606,7 @@ impl RuntimeConfigurationCommand {
     }
 }
 
-#[derive(Debug, Clap)]
+#[derive(Debug, Subcommand)]
 enum AdvertiseCommand {
     Features,
 
@@ -683,7 +688,7 @@ impl AdvertiseCommand {
     }
 }
 
-#[derive(Clap, Debug)]
+#[derive(Subcommand, Debug)]
 enum AdvertiseMonitorCommand {
     Add {
         #[clap(short, long)]
@@ -732,7 +737,7 @@ impl AdvertiseMonitorCommand {
     }
 }
 
-#[derive(Debug, Clap)]
+#[derive(Debug, Subcommand)]
 enum DeviceCommand {
     Add {
         #[clap(long, short)]
@@ -1037,7 +1042,7 @@ impl DeviceCommand {
     }
 }
 
-#[derive(Debug, Clap)]
+#[derive(Debug, Subcommand)]
 enum OobCommand {
     Add {
         #[clap(long, short)]
