@@ -16,6 +16,15 @@ fn length(len: usize) -> impl FnMut(&str) -> Result<(), anyhow::Error> {
     }
 }
 
+fn join(addr: &packet::bdaddr::BdAddr, addr_type: &AddressType) -> packet::bdaddr::Address {
+    let addr = addr.clone();
+    match addr_type.0 {
+        packet::AddressType::BrEdr => addr.to_br_edr_addr(),
+        packet::AddressType::LePublic => addr.to_le_public_addr(),
+        packet::AddressType::LeRandom => addr.to_le_random_addr(),
+    }
+}
+
 #[derive(Debug, Parser)]
 struct Opt {
     #[clap(short, long, default_value = "0")]
@@ -149,7 +158,6 @@ enum ControllerCommand {
         short_name: Option<packet::ShortName>,
     },
     */
-
     Uuid {
         #[clap(subcommand)]
         command: UuidCommand,
@@ -305,7 +313,6 @@ impl ControllerCommand {
                 println!("{}", reply.short_name().to_string_lossy());
             }
             */
-
             Self::Uuid { command } => match command {
                 UuidCommand::Add { val, svc_hint } => {
                     let reply = client
@@ -367,7 +374,7 @@ enum ConnectionCommand {
     Ls,
 
     Disconnect {
-        address: packet::Address,
+        address: packet::bdaddr::BdAddr,
         address_type: AddressType,
     },
 }
@@ -383,8 +390,8 @@ impl ConnectionCommand {
         match self {
             ConnectionCommand::Ls => {
                 let reply = client.call(index, command::GetConnections).await?;
-                for (addr, addr_type) in reply {
-                    println!("{} {:?}", addr, addr_type);
+                for addr in reply {
+                    println!("{}", addr);
                 }
             }
 
@@ -392,14 +399,9 @@ impl ConnectionCommand {
                 address,
                 address_type,
             } => {
-                let reply = client
-                    .call(
-                        index,
-                        command::Disconnect::new(address.clone(), address_type.0.clone()),
-                    )
-                    .await?;
+                let addr = join(address, address_type);
+                let reply = client.call(index, command::Disconnect::new(addr)).await?;
                 println!("{}", reply.address());
-                println!("{:?}", reply.address_type());
             }
         };
         Ok(())
@@ -741,7 +743,7 @@ impl AdvertiseMonitorCommand {
 enum DeviceCommand {
     Add {
         #[clap(long, short)]
-        address: packet::Address,
+        address: packet::bdaddr::BdAddr,
 
         #[clap(long, short, conflicts_with_all=&["le", "random"])]
         bredr: bool,
@@ -761,7 +763,7 @@ enum DeviceCommand {
 
     Remove {
         #[clap(long, short)]
-        address: packet::Address,
+        address: packet::bdaddr::BdAddr,
 
         #[clap(long, short, conflicts_with_all=&["le", "random"])]
         bredr: bool,
@@ -775,7 +777,7 @@ enum DeviceCommand {
 
     Block {
         #[clap(long, short)]
-        address: packet::Address,
+        address: packet::bdaddr::BdAddr,
 
         #[clap(long, short, conflicts_with_all=&["le", "random"])]
         bredr: bool,
@@ -789,7 +791,7 @@ enum DeviceCommand {
 
     Unblock {
         #[clap(long, short)]
-        address: packet::Address,
+        address: packet::bdaddr::BdAddr,
 
         #[clap(long, short, conflicts_with_all=&["le", "random"])]
         bredr: bool,
@@ -803,7 +805,7 @@ enum DeviceCommand {
 
     Pair {
         #[clap(long, short)]
-        address: packet::Address,
+        address: packet::bdaddr::BdAddr,
 
         #[clap(long, short, conflicts_with_all=&["le", "random"])]
         bredr: bool,
@@ -832,7 +834,7 @@ enum DeviceCommand {
 
     CancelPair {
         #[clap(long, short)]
-        address: packet::Address,
+        address: packet::bdaddr::BdAddr,
 
         #[clap(long, short, conflicts_with_all=&["le", "random"])]
         bredr: bool,
@@ -846,7 +848,7 @@ enum DeviceCommand {
 
     Unpair {
         #[clap(long, short)]
-        address: packet::Address,
+        address: packet::bdaddr::BdAddr,
 
         #[clap(long, short, conflicts_with_all=&["le", "random"])]
         bredr: bool,
@@ -885,11 +887,9 @@ impl DeviceCommand {
                     (false, true) => packet::Action::Background,
                     _ => unreachable!(),
                 };
+                let addr = join(address, &AddressType(addr_type));
                 let reply = client
-                    .call(
-                        index,
-                        command::AddDevice::new(address.clone(), addr_type, action),
-                    )
+                    .call(index, command::AddDevice::new(addr, action))
                     .await?;
                 println!("OK {:?}", reply);
             }
@@ -906,12 +906,8 @@ impl DeviceCommand {
                     (false, false, true) | (false, true, true) => packet::AddressType::LeRandom,
                     _ => unreachable!(),
                 };
-                let reply = client
-                    .call(
-                        index,
-                        command::RemoveDevice::new(address.clone(), addr_type),
-                    )
-                    .await?;
+                let addr = join(address, &AddressType(addr_type));
+                let reply = client.call(index, command::RemoveDevice::new(addr)).await?;
                 println!("OK {:?}", reply);
             }
 
@@ -927,9 +923,8 @@ impl DeviceCommand {
                     (false, false, true) | (false, true, true) => packet::AddressType::LeRandom,
                     _ => unreachable!(),
                 };
-                let reply = client
-                    .call(index, command::BlockDevice::new(address.clone(), addr_type))
-                    .await?;
+                let addr = join(address, &AddressType(addr_type));
+                let reply = client.call(index, command::BlockDevice::new(addr)).await?;
                 println!("OK {:?}", reply);
             }
 
@@ -945,11 +940,9 @@ impl DeviceCommand {
                     (false, false, true) | (false, true, true) => packet::AddressType::LeRandom,
                     _ => unreachable!(),
                 };
+                let addr = join(address, &AddressType(addr_type));
                 let reply = client
-                    .call(
-                        index,
-                        command::UnblockDevice::new(address.clone(), addr_type),
-                    )
+                    .call(index, command::UnblockDevice::new(addr))
                     .await?;
                 println!("OK {:?}", reply);
             }
@@ -986,11 +979,9 @@ impl DeviceCommand {
                     (false, false, false, false, true) => packet::IoCapability::KeyboardDisplay,
                     _ => unreachable!(),
                 };
+                let addr = join(address, &AddressType(addr_type));
                 let reply = client
-                    .call(
-                        index,
-                        command::PairDevice::new(address.clone(), addr_type, capability),
-                    )
+                    .call(index, command::PairDevice::new(addr, capability))
                     .await?;
                 println!("OK {:?}", reply);
             }
@@ -1007,11 +998,9 @@ impl DeviceCommand {
                     (false, false, true) | (false, true, true) => packet::AddressType::LeRandom,
                     _ => unreachable!(),
                 };
+                let addr = join(address, &AddressType(addr_type));
                 let reply = client
-                    .call(
-                        index,
-                        command::CancelPairDevice::new(address.clone(), addr_type),
-                    )
+                    .call(index, command::CancelPairDevice::new(addr))
                     .await?;
                 println!("OK {:?}", reply);
             }
@@ -1029,11 +1018,9 @@ impl DeviceCommand {
                     (false, false, true) | (false, true, true) => packet::AddressType::LeRandom,
                     _ => unreachable!(),
                 };
+                let addr = join(address, &AddressType(addr_type));
                 let reply = client
-                    .call(
-                        index,
-                        command::UnpairDevice::new(address.clone(), addr_type, *disconnect),
-                    )
+                    .call(index, command::UnpairDevice::new(addr, *disconnect))
                     .await?;
                 println!("OK {:?}", reply);
             }
@@ -1046,7 +1033,7 @@ impl DeviceCommand {
 enum OobCommand {
     Add {
         #[clap(long, short)]
-        address: packet::Address,
+        address: packet::bdaddr::BdAddr,
 
         #[clap(long, short, conflicts_with_all=&["le", "random"])]
         bredr: bool,
@@ -1072,7 +1059,7 @@ enum OobCommand {
 
     Remove {
         #[clap(long, short)]
-        address: packet::Address,
+        address: packet::bdaddr::BdAddr,
 
         #[clap(long, short, conflicts_with_all=&["le", "random"])]
         bredr: bool,
@@ -1120,6 +1107,7 @@ impl OobCommand {
                     (false, false, true) | (false, true, true) => packet::AddressType::LeRandom,
                     _ => unreachable!(),
                 };
+                let addr = join(address, &AddressType(addr_type));
                 let hash192 = into_array(hash192.0.clone());
                 let randomizer192 = into_array(randomizer192.0.clone());
                 let hash256 = hash256.as_ref().map(|b| into_array(b.0.clone()));
@@ -1128,8 +1116,7 @@ impl OobCommand {
                     .call(
                         index,
                         command::AddRemoteOutOfBandData::new(
-                            address.clone(),
-                            addr_type,
+                            addr,
                             hash192,
                             randomizer192,
                             hash256,
@@ -1152,11 +1139,9 @@ impl OobCommand {
                     (false, false, true) | (false, true, true) => packet::AddressType::LeRandom,
                     _ => unreachable!(),
                 };
+                let addr = join(address, &AddressType(addr_type));
                 let reply = client
-                    .call(
-                        index,
-                        command::RemoveRemoteOutOfBandData::new(address.clone(), addr_type),
-                    )
+                    .call(index, command::RemoveRemoteOutOfBandData::new(addr))
                     .await?;
                 println!("OK {:?}", reply);
             }
