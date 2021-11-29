@@ -28,8 +28,8 @@ use std::marker::PhantomData;
 use std::ops::{Deref, DerefMut};
 use std::str::FromStr;
 
+pub use bdaddr;
 use bitflags::bitflags;
-use derive_builder::Builder;
 use derive_new::new as New;
 use getset::Getters;
 
@@ -41,11 +41,29 @@ pub use helper::pack::{self, Pack, Unpack};
 pub mod command;
 pub mod event;
 
+fn split(addr: bdaddr::Address) -> (Address, AddressType) {
+    let address_type = match &addr {
+        crate::bdaddr::Address::BrEdr(..) => AddressType::BrEdr,
+        crate::bdaddr::Address::LePublic(..) => AddressType::LePublic,
+        crate::bdaddr::Address::LeRandom(..) => AddressType::LeRandom,
+    };
+    let address = Address(addr.into_bd_addr());
+    (address, address_type)
+}
+
+fn join(ty: &AddressType, addr: &Address) -> bdaddr::Address {
+    match ty {
+        AddressType::BrEdr => addr.0.clone().to_br_edr_addr(),
+        AddressType::LePublic => addr.0.clone().to_le_public_addr(),
+        AddressType::LeRandom => addr.0.clone().to_le_random_addr(),
+    }
+}
+
 #[derive(Debug, Clone, Newtype, New)]
-pub struct Address(bdaddr::Address);
+struct Address(bdaddr::BdAddr);
 
 impl FromStr for Address {
-    type Err = <bdaddr::Address as FromStr>::Err;
+    type Err = <bdaddr::BdAddr as FromStr>::Err;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Ok(Self(FromStr::from_str(s)?))
@@ -435,14 +453,38 @@ pub enum LinkKeyType {
     AuthenticatedCombinationkeyfromP256 = 0x08,
 }
 
-#[derive(Debug, Clone, Pack, Unpack, Getters, New)]
-#[getset(get = "pub")]
+#[derive(Debug, Clone, Pack, Unpack, Getters)]
 pub struct LinkKey {
     address: Address,
     address_type: AddressType,
+    #[getset(get = "pub")]
     key_type: LinkKeyType,
+    #[getset(get = "pub")]
     value: [u8; 16],
+    #[getset(get = "pub")]
     pin_length: u8,
+}
+
+impl LinkKey {
+    pub fn new(
+        addr: bdaddr::Address,
+        key_type: LinkKeyType,
+        value: [u8; 16],
+        pin_length: u8,
+    ) -> Self {
+        let (address, address_type) = split(addr);
+        Self {
+            address,
+            address_type,
+            key_type,
+            value,
+            pin_length,
+        }
+    }
+
+    pub fn address(&self) -> &crate::bdaddr::BdAddr {
+        &self.address.0
+    }
 }
 
 #[derive(Debug, Clone, Pack, Unpack)]
@@ -455,25 +497,147 @@ pub enum LongTermKeyType {
     DebugKeyP256 = 0x04,
 }
 
-#[derive(Debug, Clone, Pack, Unpack, Getters, Builder)]
-#[getset(get = "pub")]
+#[derive(Debug, thiserror::Error)]
+#[error("uninitialized field: {0:}")]
+pub struct LongTermKeyBuilderError(&'static str);
+
+#[derive(Clone, Default)]
+pub struct LongTermKeyBuilder {
+    address: Option<bdaddr::Address>,
+    key_type: Option<LongTermKeyType>,
+    master: Option<bool>,
+    encryption_size: Option<u8>,
+    encryption_diversifier: Option<u16>,
+    random_number: Option<[u8; 8]>,
+    value: Option<[u8; 16]>,
+}
+
+impl LongTermKeyBuilder {
+    pub fn address(&mut self, addr: bdaddr::Address) -> &mut Self {
+        self.address = Some(addr);
+        self
+    }
+    pub fn key_type(&mut self, key_type: LongTermKeyType) -> &mut Self {
+        self.key_type = Some(key_type);
+        self
+    }
+    pub fn master(&mut self, master: bool) -> &mut Self {
+        self.master = Some(master);
+        self
+    }
+    pub fn encryption_size(&mut self, encryption_size: u8) -> &mut Self {
+        self.encryption_size = Some(encryption_size);
+        self
+    }
+    pub fn encryption_diversifier(&mut self, encryption_diversifier: u16) -> &mut Self {
+        self.encryption_diversifier = Some(encryption_diversifier);
+        self
+    }
+    pub fn random_number(&mut self, random_number: [u8; 8]) -> &mut Self {
+        self.random_number = Some(random_number);
+        self
+    }
+    pub fn value(&mut self, value: [u8; 16]) -> &mut Self {
+        self.value = Some(value);
+        self
+    }
+    pub fn build(&self) -> Result<LongTermKey, LongTermKeyBuilderError> {
+        let address = if let Some(address) = &self.address {
+            address.clone()
+        } else {
+            return Err(LongTermKeyBuilderError("address"));
+        };
+        let key_type = if let Some(key_type) = &self.key_type {
+            key_type.clone()
+        } else {
+            return Err(LongTermKeyBuilderError("key_type"));
+        };
+        let master = if let Some(master) = self.master {
+            master
+        } else {
+            return Err(LongTermKeyBuilderError("master"));
+        };
+        let encryption_size = if let Some(encryption_size) = self.encryption_size {
+            encryption_size
+        } else {
+            return Err(LongTermKeyBuilderError("encryption_size"));
+        };
+        let encryption_diversifier =
+            if let Some(encryption_diversifier) = self.encryption_diversifier {
+                encryption_diversifier
+            } else {
+                return Err(LongTermKeyBuilderError("encryption_diversifier"));
+            };
+        let random_number = if let Some(random_number) = self.random_number {
+            random_number
+        } else {
+            return Err(LongTermKeyBuilderError("random_number"));
+        };
+        let value = if let Some(value) = self.value {
+            value
+        } else {
+            return Err(LongTermKeyBuilderError("value"));
+        };
+
+        let (address, address_type) = split(address);
+        Ok(LongTermKey {
+            address,
+            address_type,
+            key_type,
+            master,
+            encryption_size,
+            encryption_diversifier,
+            random_number,
+            value,
+        })
+    }
+}
+
+#[derive(Debug, Clone, Pack, Unpack, Getters)]
 pub struct LongTermKey {
     address: Address,
     address_type: AddressType,
+    #[getset(get = "pub")]
     key_type: LongTermKeyType,
+    #[getset(get = "pub")]
     master: bool,
+    #[getset(get = "pub")]
     encryption_size: u8,
+    #[getset(get = "pub")]
     encryption_diversifier: u16,
+    #[getset(get = "pub")]
     random_number: [u8; 8],
+    #[getset(get = "pub")]
     value: [u8; 16],
 }
 
-#[derive(Debug, Clone, Pack, Unpack, Getters, New)]
-#[getset(get = "pub")]
+impl LongTermKey {
+    pub fn address(&self) -> &crate::bdaddr::BdAddr {
+        &self.address.0
+    }
+}
+
+#[derive(Debug, Clone, Pack, Unpack, Getters)]
 pub struct IdentityResolvingKey {
     address: Address,
     address_type: AddressType,
+    #[getset(get = "pub")]
     value: [u8; 16],
+}
+
+impl IdentityResolvingKey {
+    pub fn new(addr: bdaddr::Address, value: [u8; 16]) -> Self {
+        let (address, address_type) = split(addr);
+        Self {
+            address,
+            address_type,
+            value,
+        }
+    }
+
+    pub fn address(&self) -> &crate::bdaddr::BdAddr {
+        &self.address.0
+    }
 }
 
 #[derive(Debug, Pack, Unpack)]
@@ -534,15 +698,42 @@ pub enum Action {
     AutoConnect = 2,
 }
 
-#[derive(Debug, Pack, Unpack, New, Getters)]
-#[getset(get = "pub")]
+#[derive(Debug, Pack, Unpack, Getters)]
 pub struct ConnectionParameter {
     address: Address,
     address_type: AddressType,
+    #[getset(get = "pub")]
     min_connection_interval: u16,
+    #[getset(get = "pub")]
     max_connection_interval: u16,
+    #[getset(get = "pub")]
     connection_latency: u16,
+    #[getset(get = "pub")]
     supervision_timeout: u16,
+}
+
+impl ConnectionParameter {
+    pub fn new(
+        addr: bdaddr::Address,
+        min_connection_interval: u16,
+        max_connection_interval: u16,
+        connection_latency: u16,
+        supervision_timeout: u16,
+    ) -> Self {
+        let (address, address_type) = split(addr);
+        Self {
+            address,
+            address_type,
+            min_connection_interval,
+            max_connection_interval,
+            connection_latency,
+            supervision_timeout,
+        }
+    }
+
+    pub fn address(&self) -> bdaddr::Address {
+        join(&self.address_type, &self.address)
+    }
 }
 
 bitflags! {
@@ -1068,13 +1259,30 @@ pub enum SignatureResolvingKeyType {
     AuthenticatedRemoteCsrk = 0x03,
 }
 
-#[derive(Debug, Clone, Pack, Unpack, New, Getters)]
-#[getset(get = "pub")]
+#[derive(Debug, Clone, Pack, Unpack, Getters)]
 pub struct SignatureResolvingKey {
     address: Address,
     address_type: AddressType,
+    #[getset(get = "pub")]
     typ: SignatureResolvingKeyType,
+    #[getset(get = "pub")]
     value: [u8; 16],
+}
+
+impl SignatureResolvingKey {
+    pub fn new(addr: bdaddr::Address, typ: SignatureResolvingKeyType, value: [u8; 16]) -> Self {
+        let (address, address_type) = split(addr);
+        Self {
+            address,
+            address_type,
+            typ,
+            value,
+        }
+    }
+
+    pub fn address(&self) -> bdaddr::Address {
+        join(&self.address_type, &self.address)
+    }
 }
 
 #[derive(Debug, Clone, Pack, Unpack)]
