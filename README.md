@@ -8,7 +8,7 @@ see [bluez docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git
 
 ```toml
 [dependencies]
-btmgmt = "0.1.0"
+btmgmt = "0.3.0-alpha.2"
 ```
 
 ### Example
