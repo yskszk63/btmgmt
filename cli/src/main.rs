@@ -16,7 +16,7 @@ fn length(len: usize) -> impl FnMut(&str) -> Result<(), anyhow::Error> {
     }
 }
 
-fn join(addr: &packet::bdaddr::BdAddr, addr_type: &AddressType) -> packet::bdaddr::Address {
+fn join(addr: &packet::BdAddr, addr_type: &AddressType) -> packet::Address {
     let addr = addr.clone();
     match addr_type.0 {
         packet::AddressType::BrEdr => addr.to_br_edr_addr(),
@@ -374,7 +374,7 @@ enum ConnectionCommand {
     Ls,
 
     Disconnect {
-        address: packet::bdaddr::BdAddr,
+        address: packet::BdAddr,
         address_type: AddressType,
     },
 }
@@ -743,7 +743,7 @@ impl AdvertiseMonitorCommand {
 enum DeviceCommand {
     Add {
         #[clap(long, short)]
-        address: packet::bdaddr::BdAddr,
+        address: packet::BdAddr,
 
         #[clap(long, short, conflicts_with_all=&["le", "random"])]
         bredr: bool,
@@ -763,7 +763,7 @@ enum DeviceCommand {
 
     Remove {
         #[clap(long, short)]
-        address: packet::bdaddr::BdAddr,
+        address: packet::BdAddr,
 
         #[clap(long, short, conflicts_with_all=&["le", "random"])]
         bredr: bool,
@@ -777,7 +777,7 @@ enum DeviceCommand {
 
     Block {
         #[clap(long, short)]
-        address: packet::bdaddr::BdAddr,
+        address: packet::BdAddr,
 
         #[clap(long, short, conflicts_with_all=&["le", "random"])]
         bredr: bool,
@@ -791,7 +791,7 @@ enum DeviceCommand {
 
     Unblock {
         #[clap(long, short)]
-        address: packet::bdaddr::BdAddr,
+        address: packet::BdAddr,
 
         #[clap(long, short, conflicts_with_all=&["le", "random"])]
         bredr: bool,
@@ -805,7 +805,7 @@ enum DeviceCommand {
 
     Pair {
         #[clap(long, short)]
-        address: packet::bdaddr::BdAddr,
+        address: packet::BdAddr,
 
         #[clap(long, short, conflicts_with_all=&["le", "random"])]
         bredr: bool,
@@ -834,7 +834,7 @@ enum DeviceCommand {
 
     CancelPair {
         #[clap(long, short)]
-        address: packet::bdaddr::BdAddr,
+        address: packet::BdAddr,
 
         #[clap(long, short, conflicts_with_all=&["le", "random"])]
         bredr: bool,
@@ -848,7 +848,7 @@ enum DeviceCommand {
 
     Unpair {
         #[clap(long, short)]
-        address: packet::bdaddr::BdAddr,
+        address: packet::BdAddr,
 
         #[clap(long, short, conflicts_with_all=&["le", "random"])]
         bredr: bool,
@@ -1033,7 +1033,7 @@ impl DeviceCommand {
 enum OobCommand {
     Add {
         #[clap(long, short)]
-        address: packet::bdaddr::BdAddr,
+        address: packet::BdAddr,
 
         #[clap(long, short, conflicts_with_all=&["le", "random"])]
         bredr: bool,
@@ -1059,7 +1059,7 @@ enum OobCommand {
 
     Remove {
         #[clap(long, short)]
-        address: packet::bdaddr::BdAddr,
+        address: packet::BdAddr,
 
         #[clap(long, short, conflicts_with_all=&["le", "random"])]
         bredr: bool,

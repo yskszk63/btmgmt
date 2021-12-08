@@ -119,7 +119,7 @@ mod imp {
     #[derive(Debug, Clone, Unpack, Getters)]
     #[event(0x000B)]
     pub struct DeviceConnected {
-        address: super::Address,
+        address: super::WrappedAddress,
         address_type: super::AddressType,
         #[getset(get = "pub")]
         flags: super::DeviceConnectFlags,
@@ -128,7 +128,7 @@ mod imp {
     }
 
     impl DeviceConnected {
-        pub fn address(&self) -> crate::bdaddr::Address {
+        pub fn address(&self) -> Address {
             join(&self.address_type, &self.address)
         }
     }
@@ -140,14 +140,14 @@ mod imp {
     #[derive(Debug, Clone, Unpack, Getters)]
     #[event(0x000C)]
     pub struct DeviceDisconnect {
-        address: super::Address,
+        address: super::WrappedAddress,
         address_type: super::AddressType,
         #[getset(get = "pub")]
         reason: super::DeviceDisconnectReason,
     }
 
     impl DeviceDisconnect {
-        pub fn address(&self) -> crate::bdaddr::Address {
+        pub fn address(&self) -> Address {
             join(&self.address_type, &self.address)
         }
     }
@@ -159,14 +159,14 @@ mod imp {
     #[derive(Debug, Clone, Unpack, Getters)]
     #[event(0x000D)]
     pub struct ConnectFailed {
-        address: super::Address,
+        address: super::WrappedAddress,
         address_type: super::AddressType,
         #[getset(get = "pub")]
         status: super::ErrorCode,
     }
 
     impl ConnectFailed {
-        pub fn address(&self) -> crate::bdaddr::Address {
+        pub fn address(&self) -> Address {
             join(&self.address_type, &self.address)
         }
     }
@@ -178,14 +178,14 @@ mod imp {
     #[derive(Debug, Clone, Unpack, Getters)]
     #[event(0x000E)]
     pub struct PinCodeRequest {
-        address: super::Address,
+        address: super::WrappedAddress,
         address_type: super::AddressType,
         #[getset(get = "pub")]
         secure: bool,
     }
 
     impl PinCodeRequest {
-        pub fn address(&self) -> crate::bdaddr::Address {
+        pub fn address(&self) -> Address {
             join(&self.address_type, &self.address)
         }
     }
@@ -197,7 +197,7 @@ mod imp {
     #[derive(Debug, Clone, Unpack, Getters)]
     #[event(0x000F)]
     pub struct UserConfirmationRequest {
-        address: super::Address,
+        address: super::WrappedAddress,
         address_type: super::AddressType,
         #[getset(get = "pub")]
         confirm_hint: super::ConfirmHint,
@@ -206,7 +206,7 @@ mod imp {
     }
 
     impl UserConfirmationRequest {
-        pub fn address(&self) -> crate::bdaddr::Address {
+        pub fn address(&self) -> Address {
             join(&self.address_type, &self.address)
         }
     }
@@ -218,12 +218,12 @@ mod imp {
     #[derive(Debug, Clone, Unpack)]
     #[event(0x0010)]
     pub struct UserPasskeyRequest {
-        address: super::Address,
+        address: super::WrappedAddress,
         address_type: super::AddressType,
     }
 
     impl UserPasskeyRequest {
-        pub fn address(&self) -> crate::bdaddr::Address {
+        pub fn address(&self) -> Address {
             join(&self.address_type, &self.address)
         }
     }
@@ -235,14 +235,14 @@ mod imp {
     #[derive(Debug, Clone, Unpack, Getters)]
     #[event(0x0011)]
     pub struct AuthenticationFailed {
-        address: super::Address,
+        address: super::WrappedAddress,
         address_type: super::AddressType,
         #[getset(get = "pub")]
         status: super::ErrorCode,
     }
 
     impl AuthenticationFailed {
-        pub fn address(&self) -> crate::bdaddr::Address {
+        pub fn address(&self) -> Address {
             join(&self.address_type, &self.address)
         }
     }
@@ -254,7 +254,7 @@ mod imp {
     #[derive(Debug, Clone, Unpack, Getters)]
     #[event(0x0012)]
     pub struct DeviceFound {
-        address: super::Address,
+        address: super::WrappedAddress,
         address_type: super::AddressType,
         #[getset(get = "pub")]
         rssi: u8,
@@ -265,7 +265,7 @@ mod imp {
     }
 
     impl DeviceFound {
-        pub fn address(&self) -> crate::bdaddr::Address {
+        pub fn address(&self) -> Address {
             join(&self.address_type, &self.address)
         }
     }
@@ -289,12 +289,12 @@ mod imp {
     #[derive(Debug, Clone, Unpack)]
     #[event(0x0014)]
     pub struct DeviceBlocked {
-        address: super::Address,
+        address: super::WrappedAddress,
         address_type: super::AddressType,
     }
 
     impl DeviceBlocked {
-        pub fn address(&self) -> crate::bdaddr::Address {
+        pub fn address(&self) -> Address {
             join(&self.address_type, &self.address)
         }
     }
@@ -306,12 +306,12 @@ mod imp {
     #[derive(Debug, Clone, Unpack)]
     #[event(0x0015)]
     pub struct DeviceUnblocked {
-        address: super::Address,
+        address: super::WrappedAddress,
         address_type: super::AddressType,
     }
 
     impl DeviceUnblocked {
-        pub fn address(&self) -> crate::bdaddr::Address {
+        pub fn address(&self) -> Address {
             join(&self.address_type, &self.address)
         }
     }
@@ -323,12 +323,12 @@ mod imp {
     #[derive(Debug, Clone, Unpack)]
     #[event(0x0016)]
     pub struct DeviceUnpaired {
-        address: super::Address,
+        address: super::WrappedAddress,
         address_type: super::AddressType,
     }
 
     impl DeviceUnpaired {
-        pub fn address(&self) -> crate::bdaddr::Address {
+        pub fn address(&self) -> Address {
             join(&self.address_type, &self.address)
         }
     }
@@ -340,7 +340,7 @@ mod imp {
     #[derive(Debug, Clone, Unpack, Getters)]
     #[event(0x0017)]
     pub struct PasskeyNotify {
-        address: super::Address,
+        address: super::WrappedAddress,
         address_type: super::AddressType,
         #[getset(get = "pub")]
         passkey: u32,
@@ -349,7 +349,7 @@ mod imp {
     }
 
     impl PasskeyNotify {
-        pub fn address(&self) -> crate::bdaddr::Address {
+        pub fn address(&self) -> Address {
             join(&self.address_type, &self.address)
         }
     }
@@ -363,13 +363,13 @@ mod imp {
     pub struct NewIdentityResolvingKey {
         #[getset(get = "pub")]
         store_hint: bool,
-        random_address: super::Address,
+        random_address: super::WrappedAddress,
         #[getset(get = "pub")]
         key: super::IdentityResolvingKey,
     }
 
     impl NewIdentityResolvingKey {
-        pub fn address(&self) -> crate::bdaddr::Address {
+        pub fn address(&self) -> Address {
             self.random_address.0.clone().to_le_random_addr()
         }
     }
@@ -393,14 +393,14 @@ mod imp {
     #[derive(Debug, Clone, Unpack, Getters)]
     #[event(0x001A)]
     pub struct DeviceAdded {
-        address: super::Address,
+        address: super::WrappedAddress,
         address_type: super::AddressType,
         #[getset(get = "pub")]
         action: super::Action,
     }
 
     impl DeviceAdded {
-        pub fn address(&self) -> crate::bdaddr::Address {
+        pub fn address(&self) -> Address {
             join(&self.address_type, &self.address)
         }
     }
@@ -412,12 +412,12 @@ mod imp {
     #[derive(Debug, Clone, Unpack)]
     #[event(0x001B)]
     pub struct DeviceRemoved {
-        address: super::Address,
+        address: super::WrappedAddress,
         address_type: super::AddressType,
     }
 
     impl DeviceRemoved {
-        pub fn address(&self) -> crate::bdaddr::Address {
+        pub fn address(&self) -> Address {
             join(&self.address_type, &self.address)
         }
     }
@@ -429,7 +429,7 @@ mod imp {
     #[derive(Debug, Clone, Unpack, Getters)]
     #[event(0x001C)]
     pub struct NewConnectionParameter {
-        address: super::Address,
+        address: super::WrappedAddress,
         address_type: super::AddressType,
         #[getset(get = "pub")]
         min_connection_interval: u16,
@@ -442,7 +442,7 @@ mod imp {
     }
 
     impl NewConnectionParameter {
-        pub fn address(&self) -> crate::bdaddr::Address {
+        pub fn address(&self) -> Address {
             join(&self.address_type, &self.address)
         }
     }
@@ -578,7 +578,7 @@ mod imp {
     #[derive(Debug, Clone, Unpack, Getters)]
     #[event(0x002A)]
     pub struct DeviceFlagsChanged {
-        address: super::Address,
+        address: super::WrappedAddress,
         address_type: super::AddressType,
         #[getset(get = "pub")]
         supported_flags: super::DeviceFlags,
@@ -587,7 +587,7 @@ mod imp {
     }
 
     impl DeviceFlagsChanged {
-        pub fn address(&self) -> crate::bdaddr::Address {
+        pub fn address(&self) -> Address {
             join(&self.address_type, &self.address)
         }
     }
@@ -625,12 +625,12 @@ mod imp {
     pub struct ControllerResume {
         #[getset(get = "pub")]
         wake_reason: super::WakeReason,
-        address: super::Address,
+        address: super::WrappedAddress,
         address_type: super::AddressType,
     }
 
     impl ControllerResume {
-        pub fn address(&self) -> crate::bdaddr::Address {
+        pub fn address(&self) -> Address {
             join(&self.address_type, &self.address)
         }
     }

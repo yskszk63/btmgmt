@@ -28,7 +28,7 @@ use std::marker::PhantomData;
 use std::ops::{Deref, DerefMut};
 use std::str::FromStr;
 
-pub use bdaddr;
+pub use bdaddr::{Address, BdAddr};
 use bitflags::bitflags;
 use derive_new::new as New;
 use getset::Getters;
@@ -41,17 +41,17 @@ pub use helper::pack::{self, Pack, Unpack};
 pub mod command;
 pub mod event;
 
-fn split(addr: bdaddr::Address) -> (Address, AddressType) {
+fn split(addr: Address) -> (WrappedAddress, AddressType) {
     let address_type = match &addr {
-        crate::bdaddr::Address::BrEdr(..) => AddressType::BrEdr,
-        crate::bdaddr::Address::LePublic(..) => AddressType::LePublic,
-        crate::bdaddr::Address::LeRandom(..) => AddressType::LeRandom,
+        Address::BrEdr(..) => AddressType::BrEdr,
+        Address::LePublic(..) => AddressType::LePublic,
+        Address::LeRandom(..) => AddressType::LeRandom,
     };
-    let address = Address(addr.into_bd_addr());
+    let address = WrappedAddress(addr.into_bd_addr());
     (address, address_type)
 }
 
-fn join(ty: &AddressType, addr: &Address) -> bdaddr::Address {
+fn join(ty: &AddressType, addr: &WrappedAddress) -> Address {
     match ty {
         AddressType::BrEdr => addr.0.clone().to_br_edr_addr(),
         AddressType::LePublic => addr.0.clone().to_le_public_addr(),
@@ -60,17 +60,17 @@ fn join(ty: &AddressType, addr: &Address) -> bdaddr::Address {
 }
 
 #[derive(Debug, Clone, Newtype, New)]
-struct Address(bdaddr::BdAddr);
+struct WrappedAddress(BdAddr);
 
-impl FromStr for Address {
-    type Err = <bdaddr::BdAddr as FromStr>::Err;
+impl FromStr for WrappedAddress {
+    type Err = <BdAddr as FromStr>::Err;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Ok(Self(FromStr::from_str(s)?))
     }
 }
 
-impl Pack for Address {
+impl Pack for WrappedAddress {
     fn pack<W>(&self, write: &mut W) -> pack::Result<()>
     where
         W: io::Write,
@@ -79,7 +79,7 @@ impl Pack for Address {
     }
 }
 
-impl Unpack for Address {
+impl Unpack for WrappedAddress {
     fn unpack<R>(read: &mut R) -> pack::Result<Self>
     where
         R: io::Read,
@@ -88,7 +88,7 @@ impl Unpack for Address {
     }
 }
 
-impl fmt::Display for Address {
+impl fmt::Display for WrappedAddress {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.0.fmt(f)
     }
@@ -455,7 +455,7 @@ pub enum LinkKeyType {
 
 #[derive(Debug, Clone, Pack, Unpack, Getters)]
 pub struct LinkKey {
-    address: Address,
+    address: WrappedAddress,
     address_type: AddressType,
     #[getset(get = "pub")]
     key_type: LinkKeyType,
@@ -466,12 +466,7 @@ pub struct LinkKey {
 }
 
 impl LinkKey {
-    pub fn new(
-        addr: bdaddr::Address,
-        key_type: LinkKeyType,
-        value: [u8; 16],
-        pin_length: u8,
-    ) -> Self {
+    pub fn new(addr: Address, key_type: LinkKeyType, value: [u8; 16], pin_length: u8) -> Self {
         let (address, address_type) = split(addr);
         Self {
             address,
@@ -482,7 +477,7 @@ impl LinkKey {
         }
     }
 
-    pub fn address(&self) -> &crate::bdaddr::BdAddr {
+    pub fn address(&self) -> &BdAddr {
         &self.address.0
     }
 }
@@ -503,7 +498,7 @@ pub struct LongTermKeyBuilderError(&'static str);
 
 #[derive(Clone, Default)]
 pub struct LongTermKeyBuilder {
-    address: Option<bdaddr::Address>,
+    address: Option<Address>,
     key_type: Option<LongTermKeyType>,
     master: Option<bool>,
     encryption_size: Option<u8>,
@@ -513,7 +508,7 @@ pub struct LongTermKeyBuilder {
 }
 
 impl LongTermKeyBuilder {
-    pub fn address(&mut self, addr: bdaddr::Address) -> &mut Self {
+    pub fn address(&mut self, addr: Address) -> &mut Self {
         self.address = Some(addr);
         self
     }
@@ -595,7 +590,7 @@ impl LongTermKeyBuilder {
 
 #[derive(Debug, Clone, Pack, Unpack, Getters)]
 pub struct LongTermKey {
-    address: Address,
+    address: WrappedAddress,
     address_type: AddressType,
     #[getset(get = "pub")]
     key_type: LongTermKeyType,
@@ -612,21 +607,21 @@ pub struct LongTermKey {
 }
 
 impl LongTermKey {
-    pub fn address(&self) -> &crate::bdaddr::BdAddr {
+    pub fn address(&self) -> &BdAddr {
         &self.address.0
     }
 }
 
 #[derive(Debug, Clone, Pack, Unpack, Getters)]
 pub struct IdentityResolvingKey {
-    address: Address,
+    address: WrappedAddress,
     address_type: AddressType,
     #[getset(get = "pub")]
     value: [u8; 16],
 }
 
 impl IdentityResolvingKey {
-    pub fn new(addr: bdaddr::Address, value: [u8; 16]) -> Self {
+    pub fn new(addr: Address, value: [u8; 16]) -> Self {
         let (address, address_type) = split(addr);
         Self {
             address,
@@ -635,7 +630,7 @@ impl IdentityResolvingKey {
         }
     }
 
-    pub fn address(&self) -> &crate::bdaddr::BdAddr {
+    pub fn address(&self) -> &BdAddr {
         &self.address.0
     }
 }
@@ -700,7 +695,7 @@ pub enum Action {
 
 #[derive(Debug, Pack, Unpack, Getters)]
 pub struct ConnectionParameter {
-    address: Address,
+    address: WrappedAddress,
     address_type: AddressType,
     #[getset(get = "pub")]
     min_connection_interval: u16,
@@ -714,7 +709,7 @@ pub struct ConnectionParameter {
 
 impl ConnectionParameter {
     pub fn new(
-        addr: bdaddr::Address,
+        addr: Address,
         min_connection_interval: u16,
         max_connection_interval: u16,
         connection_latency: u16,
@@ -731,7 +726,7 @@ impl ConnectionParameter {
         }
     }
 
-    pub fn address(&self) -> bdaddr::Address {
+    pub fn address(&self) -> Address {
         join(&self.address_type, &self.address)
     }
 }
@@ -1261,7 +1256,7 @@ pub enum SignatureResolvingKeyType {
 
 #[derive(Debug, Clone, Pack, Unpack, Getters)]
 pub struct SignatureResolvingKey {
-    address: Address,
+    address: WrappedAddress,
     address_type: AddressType,
     #[getset(get = "pub")]
     typ: SignatureResolvingKeyType,
@@ -1270,7 +1265,7 @@ pub struct SignatureResolvingKey {
 }
 
 impl SignatureResolvingKey {
-    pub fn new(addr: bdaddr::Address, typ: SignatureResolvingKeyType, value: [u8; 16]) -> Self {
+    pub fn new(addr: Address, typ: SignatureResolvingKeyType, value: [u8; 16]) -> Self {
         let (address, address_type) = split(addr);
         Self {
             address,
@@ -1280,7 +1275,7 @@ impl SignatureResolvingKey {
         }
     }
 
-    pub fn address(&self) -> bdaddr::Address {
+    pub fn address(&self) -> Address {
         join(&self.address_type, &self.address)
     }
 }
