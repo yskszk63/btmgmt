@@ -150,7 +150,7 @@ fn apply(attr: Args, item: &mut ItemMod) -> syn::Result<()> {
         .cloned()
         .collect::<Vec<_>>();
 
-    let mut contents = if let Some((_, contents)) = &mut item.content {
+    let contents = if let Some((_, contents)) = &mut item.content {
         contents
     } else {
         return Err(syn::Error::new_spanned(item, "no mod body found."));
@@ -159,7 +159,7 @@ fn apply(attr: Args, item: &mut ItemMod) -> syn::Result<()> {
     let name = &attr.name;
     let trait_ = &attr.trait_;
     let codes = &attr.codes;
-    let targets = collect_targets(&mut contents)?;
+    let targets = collect_targets(contents)?;
 
     if targets.is_empty() {
         return Err(syn::Error::new_spanned(

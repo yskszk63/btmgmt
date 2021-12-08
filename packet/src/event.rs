@@ -128,8 +128,8 @@ mod imp {
     }
 
     impl DeviceConnected {
-        pub fn address(&self) -> &crate::bdaddr::BdAddr {
-            &self.address.0
+        pub fn address(&self) -> crate::bdaddr::Address {
+            join(&self.address_type, &self.address)
         }
     }
 
@@ -147,8 +147,8 @@ mod imp {
     }
 
     impl DeviceDisconnect {
-        pub fn address(&self) -> &crate::bdaddr::BdAddr {
-            &self.address.0
+        pub fn address(&self) -> crate::bdaddr::Address {
+            join(&self.address_type, &self.address)
         }
     }
 
@@ -166,8 +166,8 @@ mod imp {
     }
 
     impl ConnectFailed {
-        pub fn address(&self) -> &crate::bdaddr::BdAddr {
-            &self.address.0
+        pub fn address(&self) -> crate::bdaddr::Address {
+            join(&self.address_type, &self.address)
         }
     }
 
@@ -185,8 +185,8 @@ mod imp {
     }
 
     impl PinCodeRequest {
-        pub fn address(&self) -> &crate::bdaddr::BdAddr {
-            &self.address.0
+        pub fn address(&self) -> crate::bdaddr::Address {
+            join(&self.address_type, &self.address)
         }
     }
 
@@ -206,8 +206,8 @@ mod imp {
     }
 
     impl UserConfirmationRequest {
-        pub fn address(&self) -> &crate::bdaddr::BdAddr {
-            &self.address.0
+        pub fn address(&self) -> crate::bdaddr::Address {
+            join(&self.address_type, &self.address)
         }
     }
 
@@ -223,8 +223,8 @@ mod imp {
     }
 
     impl UserPasskeyRequest {
-        pub fn address(&self) -> &crate::bdaddr::BdAddr {
-            &self.address.0
+        pub fn address(&self) -> crate::bdaddr::Address {
+            join(&self.address_type, &self.address)
         }
     }
 
@@ -242,8 +242,8 @@ mod imp {
     }
 
     impl AuthenticationFailed {
-        pub fn address(&self) -> &crate::bdaddr::BdAddr {
-            &self.address.0
+        pub fn address(&self) -> crate::bdaddr::Address {
+            join(&self.address_type, &self.address)
         }
     }
 
@@ -265,8 +265,8 @@ mod imp {
     }
 
     impl DeviceFound {
-        pub fn address(&self) -> &crate::bdaddr::BdAddr {
-            &self.address.0
+        pub fn address(&self) -> crate::bdaddr::Address {
+            join(&self.address_type, &self.address)
         }
     }
 
@@ -294,8 +294,8 @@ mod imp {
     }
 
     impl DeviceBlocked {
-        pub fn address(&self) -> &crate::bdaddr::BdAddr {
-            &self.address.0
+        pub fn address(&self) -> crate::bdaddr::Address {
+            join(&self.address_type, &self.address)
         }
     }
 
@@ -311,8 +311,8 @@ mod imp {
     }
 
     impl DeviceUnblocked {
-        pub fn address(&self) -> &crate::bdaddr::BdAddr {
-            &self.address.0
+        pub fn address(&self) -> crate::bdaddr::Address {
+            join(&self.address_type, &self.address)
         }
     }
 
@@ -328,8 +328,8 @@ mod imp {
     }
 
     impl DeviceUnpaired {
-        pub fn address(&self) -> &crate::bdaddr::BdAddr {
-            &self.address.0
+        pub fn address(&self) -> crate::bdaddr::Address {
+            join(&self.address_type, &self.address)
         }
     }
 
@@ -349,8 +349,8 @@ mod imp {
     }
 
     impl PasskeyNotify {
-        pub fn address(&self) -> &crate::bdaddr::BdAddr {
-            &self.address.0
+        pub fn address(&self) -> crate::bdaddr::Address {
+            join(&self.address_type, &self.address)
         }
     }
 
@@ -400,8 +400,8 @@ mod imp {
     }
 
     impl DeviceAdded {
-        pub fn address(&self) -> &crate::bdaddr::BdAddr {
-            &self.address.0
+        pub fn address(&self) -> crate::bdaddr::Address {
+            join(&self.address_type, &self.address)
         }
     }
 
@@ -417,8 +417,8 @@ mod imp {
     }
 
     impl DeviceRemoved {
-        pub fn address(&self) -> &crate::bdaddr::BdAddr {
-            &self.address.0
+        pub fn address(&self) -> crate::bdaddr::Address {
+            join(&self.address_type, &self.address)
         }
     }
 
@@ -442,8 +442,8 @@ mod imp {
     }
 
     impl NewConnectionParameter {
-        pub fn address(&self) -> &crate::bdaddr::BdAddr {
-            &self.address.0
+        pub fn address(&self) -> crate::bdaddr::Address {
+            join(&self.address_type, &self.address)
         }
     }
 
@@ -587,8 +587,8 @@ mod imp {
     }
 
     impl DeviceFlagsChanged {
-        pub fn address(&self) -> &crate::bdaddr::BdAddr {
-            &self.address.0
+        pub fn address(&self) -> crate::bdaddr::Address {
+            join(&self.address_type, &self.address)
         }
     }
 
@@ -630,8 +630,8 @@ mod imp {
     }
 
     impl ControllerResume {
-        pub fn address(&self) -> &crate::bdaddr::BdAddr {
-            &self.address.0
+        pub fn address(&self) -> crate::bdaddr::Address {
+            join(&self.address_type, &self.address)
         }
     }
 }

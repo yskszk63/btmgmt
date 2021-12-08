@@ -1,6 +1,6 @@
 [package]
 name = "btmgmt-cli"
-version = "0.2.5"
+version = "0.3.0-alpha.1"
 authors = ["yskszk63 <yskszk63@gmail.com>"]
 edition = "2018"
 description = "Linux Management API Command Line Client"
@@ -8,7 +8,7 @@ license = "MIT OR Apache-2.0"
 keywords = ["bluetooth"]
 
 [dependencies]
-btmgmt = { path = "..", version = "0.2.5" }
+btmgmt = { path = "..", version = "0.3.0-alpha.1" }
 clap = "3.0.0-beta.5"
 anyhow = "1.0"
 tokio = { version = "1.13", features = ["rt", "macros"] }
