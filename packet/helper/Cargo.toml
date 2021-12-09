@@ -1,6 +1,6 @@
 [package]
 name = "btmgmt-packet-helper"
-version = "0.3.0-alpha.2"
+version = "0.3.0-alpha.3"
 authors = ["yskszk63 <yskszk63@gmail.com>"]
 edition = "2018"
 autotests = false
