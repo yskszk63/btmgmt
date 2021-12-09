@@ -120,7 +120,7 @@ mod imp {
     #[event(0x000B)]
     pub struct DeviceConnected {
         address: super::WrappedAddress,
-        address_type: super::AddressType,
+        address_type: super::InternalAddressType,
         #[getset(get = "pub")]
         flags: super::DeviceConnectFlags,
         #[getset(get = "pub")]
@@ -141,7 +141,7 @@ mod imp {
     #[event(0x000C)]
     pub struct DeviceDisconnect {
         address: super::WrappedAddress,
-        address_type: super::AddressType,
+        address_type: super::InternalAddressType,
         #[getset(get = "pub")]
         reason: super::DeviceDisconnectReason,
     }
@@ -160,7 +160,7 @@ mod imp {
     #[event(0x000D)]
     pub struct ConnectFailed {
         address: super::WrappedAddress,
-        address_type: super::AddressType,
+        address_type: super::InternalAddressType,
         #[getset(get = "pub")]
         status: super::ErrorCode,
     }
@@ -179,7 +179,7 @@ mod imp {
     #[event(0x000E)]
     pub struct PinCodeRequest {
         address: super::WrappedAddress,
-        address_type: super::AddressType,
+        address_type: super::InternalAddressType,
         #[getset(get = "pub")]
         secure: bool,
     }
@@ -198,7 +198,7 @@ mod imp {
     #[event(0x000F)]
     pub struct UserConfirmationRequest {
         address: super::WrappedAddress,
-        address_type: super::AddressType,
+        address_type: super::InternalAddressType,
         #[getset(get = "pub")]
         confirm_hint: super::ConfirmHint,
         #[getset(get = "pub")]
@@ -219,7 +219,7 @@ mod imp {
     #[event(0x0010)]
     pub struct UserPasskeyRequest {
         address: super::WrappedAddress,
-        address_type: super::AddressType,
+        address_type: super::InternalAddressType,
     }
 
     impl UserPasskeyRequest {
@@ -236,7 +236,7 @@ mod imp {
     #[event(0x0011)]
     pub struct AuthenticationFailed {
         address: super::WrappedAddress,
-        address_type: super::AddressType,
+        address_type: super::InternalAddressType,
         #[getset(get = "pub")]
         status: super::ErrorCode,
     }
@@ -255,7 +255,7 @@ mod imp {
     #[event(0x0012)]
     pub struct DeviceFound {
         address: super::WrappedAddress,
-        address_type: super::AddressType,
+        address_type: super::InternalAddressType,
         #[getset(get = "pub")]
         rssi: u8,
         #[getset(get = "pub")]
@@ -290,7 +290,7 @@ mod imp {
     #[event(0x0014)]
     pub struct DeviceBlocked {
         address: super::WrappedAddress,
-        address_type: super::AddressType,
+        address_type: super::InternalAddressType,
     }
 
     impl DeviceBlocked {
@@ -307,7 +307,7 @@ mod imp {
     #[event(0x0015)]
     pub struct DeviceUnblocked {
         address: super::WrappedAddress,
-        address_type: super::AddressType,
+        address_type: super::InternalAddressType,
     }
 
     impl DeviceUnblocked {
@@ -324,7 +324,7 @@ mod imp {
     #[event(0x0016)]
     pub struct DeviceUnpaired {
         address: super::WrappedAddress,
-        address_type: super::AddressType,
+        address_type: super::InternalAddressType,
     }
 
     impl DeviceUnpaired {
@@ -341,7 +341,7 @@ mod imp {
     #[event(0x0017)]
     pub struct PasskeyNotify {
         address: super::WrappedAddress,
-        address_type: super::AddressType,
+        address_type: super::InternalAddressType,
         #[getset(get = "pub")]
         passkey: u32,
         #[getset(get = "pub")]
@@ -394,7 +394,7 @@ mod imp {
     #[event(0x001A)]
     pub struct DeviceAdded {
         address: super::WrappedAddress,
-        address_type: super::AddressType,
+        address_type: super::InternalAddressType,
         #[getset(get = "pub")]
         action: super::Action,
     }
@@ -413,7 +413,7 @@ mod imp {
     #[event(0x001B)]
     pub struct DeviceRemoved {
         address: super::WrappedAddress,
-        address_type: super::AddressType,
+        address_type: super::InternalAddressType,
     }
 
     impl DeviceRemoved {
@@ -430,7 +430,7 @@ mod imp {
     #[event(0x001C)]
     pub struct NewConnectionParameter {
         address: super::WrappedAddress,
-        address_type: super::AddressType,
+        address_type: super::InternalAddressType,
         #[getset(get = "pub")]
         min_connection_interval: u16,
         #[getset(get = "pub")]
@@ -579,7 +579,7 @@ mod imp {
     #[event(0x002A)]
     pub struct DeviceFlagsChanged {
         address: super::WrappedAddress,
-        address_type: super::AddressType,
+        address_type: super::InternalAddressType,
         #[getset(get = "pub")]
         supported_flags: super::DeviceFlags,
         #[getset(get = "pub")]
@@ -626,7 +626,7 @@ mod imp {
         #[getset(get = "pub")]
         wake_reason: super::WakeReason,
         address: super::WrappedAddress,
-        address_type: super::AddressType,
+        address_type: super::InternalAddressType,
     }
 
     impl ControllerResume {

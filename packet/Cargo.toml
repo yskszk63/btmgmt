@@ -9,7 +9,7 @@ license = "MIT OR Apache-2.0"
 keywords = ["bluetooth"]
 
 [dependencies]
-bdaddr = "0.2.0-alpha.2"
+bdaddr = "0.2.0-alpha.4"
 thiserror = "1.0"
 btmgmt-packet-helper = { path = "helper", version = "0.3.0-alpha.2" }
 bitflags = "1.3"

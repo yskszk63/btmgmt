@@ -28,7 +28,7 @@ use std::marker::PhantomData;
 use std::ops::{Deref, DerefMut};
 use std::str::FromStr;
 
-pub use bdaddr::{Address, BdAddr};
+pub use bdaddr::{Address, AddressType, BdAddr};
 use bitflags::bitflags;
 use derive_new::new as New;
 use getset::Getters;
@@ -41,21 +41,21 @@ pub use helper::pack::{self, Pack, Unpack};
 pub mod command;
 pub mod event;
 
-fn split(addr: Address) -> (WrappedAddress, AddressType) {
+fn split(addr: Address) -> (WrappedAddress, InternalAddressType) {
     let address_type = match &addr {
-        Address::BrEdr(..) => AddressType::BrEdr,
-        Address::LePublic(..) => AddressType::LePublic,
-        Address::LeRandom(..) => AddressType::LeRandom,
+        Address::BrEdr(..) => InternalAddressType::BrEdr,
+        Address::LePublic(..) => InternalAddressType::LePublic,
+        Address::LeRandom(..) => InternalAddressType::LeRandom,
     };
     let address = WrappedAddress(addr.into_bd_addr());
     (address, address_type)
 }
 
-fn join(ty: &AddressType, addr: &WrappedAddress) -> Address {
+fn join(ty: &InternalAddressType, addr: &WrappedAddress) -> Address {
     match ty {
-        AddressType::BrEdr => addr.0.clone().to_br_edr_addr(),
-        AddressType::LePublic => addr.0.clone().to_le_public_addr(),
-        AddressType::LeRandom => addr.0.clone().to_le_random_addr(),
+        InternalAddressType::BrEdr => addr.0.clone().to_br_edr_addr(),
+        InternalAddressType::LePublic => addr.0.clone().to_le_public_addr(),
+        InternalAddressType::LeRandom => addr.0.clone().to_le_random_addr(),
     }
 }
 
@@ -261,7 +261,7 @@ impl Unpack for CommandsEvents {
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Pack, Unpack)]
 #[pack(u8)]
-pub enum AddressType {
+enum InternalAddressType {
     BrEdr = 0,
     LePublic = 1,
     LeRandom = 2,
@@ -456,7 +456,7 @@ pub enum LinkKeyType {
 #[derive(Debug, Clone, Pack, Unpack, Getters)]
 pub struct LinkKey {
     address: WrappedAddress,
-    address_type: AddressType,
+    address_type: InternalAddressType,
     #[getset(get = "pub")]
     key_type: LinkKeyType,
     #[getset(get = "pub")]
@@ -591,7 +591,7 @@ impl LongTermKeyBuilder {
 #[derive(Debug, Clone, Pack, Unpack, Getters)]
 pub struct LongTermKey {
     address: WrappedAddress,
-    address_type: AddressType,
+    address_type: InternalAddressType,
     #[getset(get = "pub")]
     key_type: LongTermKeyType,
     #[getset(get = "pub")]
@@ -615,7 +615,7 @@ impl LongTermKey {
 #[derive(Debug, Clone, Pack, Unpack, Getters)]
 pub struct IdentityResolvingKey {
     address: WrappedAddress,
-    address_type: AddressType,
+    address_type: InternalAddressType,
     #[getset(get = "pub")]
     value: [u8; 16],
 }
@@ -696,7 +696,7 @@ pub enum Action {
 #[derive(Debug, Pack, Unpack, Getters)]
 pub struct ConnectionParameter {
     address: WrappedAddress,
-    address_type: AddressType,
+    address_type: InternalAddressType,
     #[getset(get = "pub")]
     min_connection_interval: u16,
     #[getset(get = "pub")]
@@ -1257,7 +1257,7 @@ pub enum SignatureResolvingKeyType {
 #[derive(Debug, Clone, Pack, Unpack, Getters)]
 pub struct SignatureResolvingKey {
     address: WrappedAddress,
-    address_type: AddressType,
+    address_type: InternalAddressType,
     #[getset(get = "pub")]
     typ: SignatureResolvingKeyType,
     #[getset(get = "pub")]

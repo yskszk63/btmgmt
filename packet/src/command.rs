@@ -296,7 +296,7 @@ mod imp {
     #[command(code = 0x0014, reply = DisconnectReply)]
     pub struct Disconnect {
         address: super::WrappedAddress,
-        address_type: super::AddressType,
+        address_type: super::InternalAddressType,
     }
 
     impl Disconnect {
@@ -313,7 +313,7 @@ mod imp {
     #[derive(Debug, Unpack)]
     pub struct DisconnectReply {
         address: super::WrappedAddress,
-        address_type: super::AddressType,
+        address_type: super::InternalAddressType,
     }
 
     impl DisconnectReply {
@@ -339,7 +339,7 @@ mod imp {
         where
             R: io::Read,
         {
-            let inner = Vec::<(super::WrappedAddress, super::AddressType)>::unpack(read)?;
+            let inner = Vec::<(super::WrappedAddress, super::InternalAddressType)>::unpack(read)?;
             let inner = inner
                 .into_iter()
                 .map(|(addr, ty)| join(&ty, &addr))
@@ -356,7 +356,7 @@ mod imp {
     #[command(code = 0x0016, reply = PinCodeReplyReply)]
     pub struct PinCodeReply {
         address: super::WrappedAddress,
-        address_type: super::AddressType,
+        address_type: super::InternalAddressType,
         pin_length: u8,
         pin_code: [u8; 16],
     }
@@ -377,7 +377,7 @@ mod imp {
     #[derive(Debug, Unpack)]
     pub struct PinCodeReplyReply {
         address: super::WrappedAddress,
-        address_type: super::AddressType,
+        address_type: super::InternalAddressType,
     }
 
     impl PinCodeReplyReply {
@@ -394,7 +394,7 @@ mod imp {
     #[command(code = 0x0017, reply = PinCodeNegativeReplyReply)]
     pub struct PinCodeNegativeReply {
         address: super::WrappedAddress,
-        address_type: super::AddressType,
+        address_type: super::InternalAddressType,
     }
 
     impl PinCodeNegativeReply {
@@ -411,7 +411,7 @@ mod imp {
     #[derive(Debug, Unpack)]
     pub struct PinCodeNegativeReplyReply {
         address: super::WrappedAddress,
-        address_type: super::AddressType,
+        address_type: super::InternalAddressType,
     }
 
     impl PinCodeNegativeReplyReply {
@@ -440,7 +440,7 @@ mod imp {
     #[command(code = 0x0019, reply = PairDeviceReply)]
     pub struct PairDevice {
         address: super::WrappedAddress,
-        address_type: super::AddressType,
+        address_type: super::InternalAddressType,
         io_capability: super::IoCapability,
     }
 
@@ -459,7 +459,7 @@ mod imp {
     #[derive(Debug, Unpack)]
     pub struct PairDeviceReply {
         address: super::WrappedAddress,
-        address_type: super::AddressType,
+        address_type: super::InternalAddressType,
     }
 
     impl PairDeviceReply {
@@ -476,7 +476,7 @@ mod imp {
     #[command(code = 0x001A, reply = CancelPairDeviceReply)]
     pub struct CancelPairDevice {
         address: super::WrappedAddress,
-        address_type: super::AddressType,
+        address_type: super::InternalAddressType,
     }
 
     impl CancelPairDevice {
@@ -493,7 +493,7 @@ mod imp {
     #[derive(Debug, Unpack)]
     pub struct CancelPairDeviceReply {
         address: super::WrappedAddress,
-        address_type: super::AddressType,
+        address_type: super::InternalAddressType,
     }
 
     impl CancelPairDeviceReply {
@@ -510,7 +510,7 @@ mod imp {
     #[command(code = 0x001B, reply = UnpairDeviceReply)]
     pub struct UnpairDevice {
         address: super::WrappedAddress,
-        address_type: super::AddressType,
+        address_type: super::InternalAddressType,
         disconnect: bool,
     }
 
@@ -529,7 +529,7 @@ mod imp {
     #[derive(Debug, Unpack)]
     pub struct UnpairDeviceReply {
         address: super::WrappedAddress,
-        address_type: super::AddressType,
+        address_type: super::InternalAddressType,
     }
 
     impl UnpairDeviceReply {
@@ -546,7 +546,7 @@ mod imp {
     #[command(code = 0x001C, reply = UserConfirmationReplyReply)]
     pub struct UserConfirmationReply {
         address: super::WrappedAddress,
-        address_type: super::AddressType,
+        address_type: super::InternalAddressType,
     }
 
     impl UserConfirmationReply {
@@ -563,7 +563,7 @@ mod imp {
     #[derive(Debug, Unpack)]
     pub struct UserConfirmationReplyReply {
         address: super::WrappedAddress,
-        address_type: super::AddressType,
+        address_type: super::InternalAddressType,
     }
 
     impl UserConfirmationReplyReply {
@@ -580,7 +580,7 @@ mod imp {
     #[command(code = 0x001D, reply = UserConfirmationNegativeReplyReply)]
     pub struct UserConfirmationNegativeReply {
         address: super::WrappedAddress,
-        address_type: super::AddressType,
+        address_type: super::InternalAddressType,
     }
 
     impl UserConfirmationNegativeReply {
@@ -597,7 +597,7 @@ mod imp {
     #[derive(Debug, Unpack)]
     pub struct UserConfirmationNegativeReplyReply {
         address: super::WrappedAddress,
-        address_type: super::AddressType,
+        address_type: super::InternalAddressType,
     }
 
     impl UserConfirmationNegativeReplyReply {
@@ -614,7 +614,7 @@ mod imp {
     #[command(code = 0x001E, reply = UserPasskeyReplyReply)]
     pub struct UserPasskeyReply {
         address: super::WrappedAddress,
-        address_type: super::AddressType,
+        address_type: super::InternalAddressType,
         passkey: u32,
     }
 
@@ -633,7 +633,7 @@ mod imp {
     #[derive(Debug, Unpack)]
     pub struct UserPasskeyReplyReply {
         address: super::WrappedAddress,
-        address_type: super::AddressType,
+        address_type: super::InternalAddressType,
     }
 
     impl UserPasskeyReplyReply {
@@ -650,7 +650,7 @@ mod imp {
     #[command(code = 0x001F, reply = UserPasskeyNegativeReplyReply)]
     pub struct UserPasskeyNegativeReply {
         address: super::WrappedAddress,
-        address_type: super::AddressType,
+        address_type: super::InternalAddressType,
     }
 
     impl UserPasskeyNegativeReply {
@@ -667,7 +667,7 @@ mod imp {
     #[derive(Debug, Unpack)]
     pub struct UserPasskeyNegativeReplyReply {
         address: super::WrappedAddress,
-        address_type: super::AddressType,
+        address_type: super::InternalAddressType,
     }
 
     impl UserPasskeyNegativeReplyReply {
@@ -702,7 +702,7 @@ mod imp {
     #[command(code = 0x0021, reply = AddRemoteOutOfBandDataReply)]
     pub struct AddRemoteOutOfBandData {
         address: super::WrappedAddress,
-        address_type: super::AddressType,
+        address_type: super::InternalAddressType,
         hash192: [u8; 16],
         randomizer192: [u8; 16],
         hash256: Option<[u8; 16]>,
@@ -733,7 +733,7 @@ mod imp {
     #[derive(Debug, Unpack)]
     pub struct AddRemoteOutOfBandDataReply {
         address: super::WrappedAddress,
-        address_type: super::AddressType,
+        address_type: super::InternalAddressType,
     }
 
     impl AddRemoteOutOfBandDataReply {
@@ -750,7 +750,7 @@ mod imp {
     #[command(code = 0x0022, reply = RemoveRemoteOutOfBandDataReply)]
     pub struct RemoveRemoteOutOfBandData {
         address: super::WrappedAddress,
-        address_type: super::AddressType,
+        address_type: super::InternalAddressType,
     }
 
     impl RemoveRemoteOutOfBandData {
@@ -767,7 +767,7 @@ mod imp {
     #[derive(Debug, Unpack)]
     pub struct RemoveRemoteOutOfBandDataReply {
         address: super::WrappedAddress,
-        address_type: super::AddressType,
+        address_type: super::InternalAddressType,
     }
 
     impl RemoveRemoteOutOfBandDataReply {
@@ -808,7 +808,7 @@ mod imp {
     #[command(code = 0x0025, reply = ConfirmNameReply)]
     pub struct ConfirmName {
         address: super::WrappedAddress,
-        address_type: super::AddressType,
+        address_type: super::InternalAddressType,
         name_known: bool,
     }
 
@@ -827,7 +827,7 @@ mod imp {
     #[derive(Debug, Unpack)]
     pub struct ConfirmNameReply {
         address: super::WrappedAddress,
-        address_type: super::AddressType,
+        address_type: super::InternalAddressType,
     }
 
     impl ConfirmNameReply {
@@ -844,7 +844,7 @@ mod imp {
     #[command(code = 0x0026, reply = BlockDeviceReply)]
     pub struct BlockDevice {
         address: super::WrappedAddress,
-        address_type: super::AddressType,
+        address_type: super::InternalAddressType,
     }
 
     impl BlockDevice {
@@ -861,7 +861,7 @@ mod imp {
     #[derive(Debug, Unpack)]
     pub struct BlockDeviceReply {
         address: super::WrappedAddress,
-        address_type: super::AddressType,
+        address_type: super::InternalAddressType,
     }
 
     impl BlockDeviceReply {
@@ -878,7 +878,7 @@ mod imp {
     #[command(code = 0x0027, reply = UnblockDeviceReply)]
     pub struct UnblockDevice {
         address: super::WrappedAddress,
-        address_type: super::AddressType,
+        address_type: super::InternalAddressType,
     }
 
     impl UnblockDevice {
@@ -895,7 +895,7 @@ mod imp {
     #[derive(Debug, Unpack)]
     pub struct UnblockDeviceReply {
         address: super::WrappedAddress,
-        address_type: super::AddressType,
+        address_type: super::InternalAddressType,
     }
 
     impl UnblockDeviceReply {
@@ -1039,7 +1039,7 @@ mod imp {
     #[command(code = 0x0031, reply = GetConnectionInformationReply)]
     pub struct GetConnectionInformation {
         address: super::WrappedAddress,
-        address_type: super::AddressType,
+        address_type: super::InternalAddressType,
     }
 
     impl GetConnectionInformation {
@@ -1056,7 +1056,7 @@ mod imp {
     #[derive(Debug, Unpack, Getters)]
     pub struct GetConnectionInformationReply {
         address: super::WrappedAddress,
-        address_type: super::AddressType,
+        address_type: super::InternalAddressType,
         #[getset(get = "pub")]
         rssi: u8,
         #[getset(get = "pub")]
@@ -1079,7 +1079,7 @@ mod imp {
     #[command(code = 0x0032, reply = GetClockInformationReply)]
     pub struct GetClockInformation {
         address: super::WrappedAddress,
-        address_type: super::AddressType,
+        address_type: super::InternalAddressType,
     }
 
     impl GetClockInformation {
@@ -1096,7 +1096,7 @@ mod imp {
     #[derive(Debug, Unpack, Getters)]
     pub struct GetClockInformationReply {
         address: super::WrappedAddress,
-        address_type: super::AddressType,
+        address_type: super::InternalAddressType,
         #[getset(get = "pub")]
         local_clock: u32,
         #[getset(get = "pub")]
@@ -1119,7 +1119,7 @@ mod imp {
     #[command(code = 0x0033, reply = AddDeviceReply)]
     pub struct AddDevice {
         address: super::WrappedAddress,
-        address_type: super::AddressType,
+        address_type: super::InternalAddressType,
         action: super::Action,
     }
 
@@ -1138,7 +1138,7 @@ mod imp {
     #[derive(Debug, Unpack)]
     pub struct AddDeviceReply {
         address: super::WrappedAddress,
-        address_type: super::AddressType,
+        address_type: super::InternalAddressType,
     }
 
     impl AddDeviceReply {
@@ -1155,7 +1155,7 @@ mod imp {
     #[command(code = 0x0034, reply = RemoveDeviceReply)]
     pub struct RemoveDevice {
         address: super::WrappedAddress,
-        address_type: super::AddressType,
+        address_type: super::InternalAddressType,
     }
 
     impl RemoveDevice {
@@ -1172,7 +1172,7 @@ mod imp {
     #[derive(Debug, Unpack)]
     pub struct RemoveDeviceReply {
         address: super::WrappedAddress,
-        address_type: super::AddressType,
+        address_type: super::InternalAddressType,
     }
 
     impl RemoveDeviceReply {
@@ -1579,7 +1579,7 @@ mod imp {
     #[command(code = 0x004F, reply = GetDeviceFlagReply)]
     pub struct GetDeviceFlag {
         address: super::WrappedAddress,
-        address_type: super::AddressType,
+        address_type: super::InternalAddressType,
     }
 
     impl GetDeviceFlag {
@@ -1596,7 +1596,7 @@ mod imp {
     #[derive(Debug, Unpack, Getters)]
     pub struct GetDeviceFlagReply {
         address: super::WrappedAddress,
-        address_type: super::AddressType,
+        address_type: super::InternalAddressType,
         #[getset(get = "pub")]
         supported_flags: super::DeviceFlags,
         #[getset(get = "pub")]
@@ -1617,7 +1617,7 @@ mod imp {
     #[command(code = 0x0050, reply = SetDeviceFlagReply)]
     pub struct SetDeviceFlag {
         address: super::WrappedAddress, // TODO typo
-        address_type: super::AddressType,
+        address_type: super::InternalAddressType,
         current_flags: super::DeviceFlags,
     }
 
@@ -1636,7 +1636,7 @@ mod imp {
     #[derive(Debug, Unpack)]
     pub struct SetDeviceFlagReply {
         address: super::WrappedAddress,
-        address_type: super::AddressType,
+        address_type: super::InternalAddressType,
     }
 
     impl SetDeviceFlagReply {
