@@ -1,4 +1,4 @@
-#![doc(html_root_url = "https://docs.rs/btmgmt-packet/0.3.0-alpha.3")]
+#![doc(html_root_url = "https://docs.rs/btmgmt-packet/0.3.0-alpha.4")]
 #![allow(non_upper_case_globals)]
 //! Linux bluetooth mgmt API packet structures.
 //!

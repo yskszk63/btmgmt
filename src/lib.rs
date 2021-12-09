@@ -1,4 +1,4 @@
-#![doc(html_root_url = "https://docs.rs/btmgmt/0.3.0-alpha.3")]
+#![doc(html_root_url = "https://docs.rs/btmgmt/0.3.0-alpha.4")]
 //! Linux bluetooth mgmt API client.
 //!
 //! see [bluez docs/mgmt-api.txt](https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/doc/mgmt-api.txt)
@@ -7,7 +7,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! btmgmt = "0.3.0-alpha.3"
+//! btmgmt = "0.3.0-alpha.4"
 //! ```
 //!
 //! ## Example
