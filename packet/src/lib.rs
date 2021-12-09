@@ -477,8 +477,8 @@ impl LinkKey {
         }
     }
 
-    pub fn address(&self) -> &BdAddr {
-        &self.address.0
+    pub fn address(&self) -> Address {
+        join(&self.address_type, &self.address)
     }
 }
 
@@ -607,8 +607,8 @@ pub struct LongTermKey {
 }
 
 impl LongTermKey {
-    pub fn address(&self) -> &BdAddr {
-        &self.address.0
+    pub fn address(&self) -> Address {
+        join(&self.address_type, &self.address)
     }
 }
 
@@ -630,8 +630,8 @@ impl IdentityResolvingKey {
         }
     }
 
-    pub fn address(&self) -> &BdAddr {
-        &self.address.0
+    pub fn address(&self) -> Address {
+        join(&self.address_type, &self.address)
     }
 }
 
